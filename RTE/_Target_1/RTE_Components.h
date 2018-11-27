@@ -16,5 +16,6 @@
  */
 #define CMSIS_device_header "stm32l4xx.h"
 
+#define RTE_DEVICE_STARTUP_STM32L4XX    /* Device Startup for STM32L4 */
 
 #endif /* RTE_COMPONENTS_H */

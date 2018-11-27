@@ -1,0 +1,148 @@
+; SUBSRS.DAT V1.9e - Russian/Cyrillic character set for SF-4900RS
+; (c) IMSL Software 1998 (with special thanks to Roman Moroz)
+; Casio SF-4600RS/4900RS <-> PC character substitutions
+; Character substitutions must be edited here in the INI file
+; (see the section on this topic in the manual or online help)
+
+; The order of following entries is significant and should not be changed
+; No trailing comments allowed on SUBS lines
+
+[Substitutions]
+
+; Quote character substitution must always be present to allow storage in
+; quote-delimited CSV file format
+
+SUBS=",''
+
+SUBS=[&H10,&H80],&HC0
+    ;А - Windows кодировка
+SUBS=[&H10,&H81],&HC1
+    ;Б
+SUBS=[&H10,&H82],&HC2
+    ;В
+SUBS=[&H10,&H83],&HC3
+    ;Г
+SUBS=[&H10,&H84],&HC4
+    ;Д
+SUBS=[&H10,&H85],&HC5
+    ;Е
+SUBS=[&H10,&H86],&HC6
+    ;Ж
+SUBS=[&H10,&H87],&HC7
+    ;З
+SUBS=[&H10,&H88],&HC8
+    ;И
+SUBS=[&H10,&H89],&HC9
+    ;Й
+SUBS=[&H10,&H8A],&HCA
+    ;К
+SUBS=[&H10,&H8B],&HCB
+    ;Л
+SUBS=[&H10,&H8C],&HCC
+    ;М
+SUBS=[&H10,&H8D],&HCD
+    ;Н
+SUBS=[&H10,&H8E],&HCE
+    ;О
+SUBS=[&H10,&H8F],&HCF
+    ;П
+SUBS=[&H10,&H90],&HD0
+    ;Р
+SUBS=[&H10,&H91],&HD1
+    ;С
+SUBS=[&H10,&H92],&HD2
+    ;Т
+SUBS=[&H10,&H93],&HD3
+    ;У
+SUBS=[&H10,&H94],&HD4
+    ;Ф
+SUBS=[&H10,&H95],&HD5
+    ;Х
+SUBS=[&H10,&H96],&HD6
+    ;Ц
+SUBS=[&H10,&H97],&HD7
+    ;Ч
+SUBS=[&H10,&H98],&HD8
+    ;Ш
+SUBS=[&H10,&H99],&HD9
+    ;Щ
+SUBS=[&H10,&H9A],&HDA
+    ;Ъ
+SUBS=[&H10,&H9B],&HDB
+    ;Ы
+SUBS=[&H10,&H9C],&HDC
+    ;Ь
+SUBS=[&H10,&H9D],&HDD
+    ;Э
+SUBS=[&H10,&H9E],&HDE
+    ;Ю
+SUBS=[&H10,&H9F],&HDF
+    ;Я
+SUBS=[&H10,&HE8],&HF8
+    ;ш
+SUBS=[&H10,&HA8],&HE8
+    ;и
+SUBS=[&H10,&HF0],&HA8
+    ;Ё
+SUBS=[&H10,&HE0],&HF0
+    ;р
+SUBS=[&H10,&HA0],&HE0
+    ;а
+SUBS=[&H10,&HF1],&HB8
+    ;ё
+SUBS=[&H10,&HE1],&HF1
+    ;с
+SUBS=[&H10,&HA1],&HE1
+    ;б
+SUBS=[&H10,&HE2],&HF2
+    ;т
+SUBS=[&H10,&HA2],&HE2
+    ;в
+SUBS=[&H10,&HE3],&HF3
+    ;у
+SUBS=[&H10,&HA3],&HE3
+    ;г
+SUBS=[&H10,&HE4],&HF4
+    ;ф
+SUBS=[&H10,&HA4],&HE4
+    ;д
+SUBS=[&H10,&HE5],&HF5
+    ;х
+SUBS=[&H10,&HA5],&HE5
+    ;е
+SUBS=[&H10,&HE6],&HF6
+    ;ц
+SUBS=[&H10,&HA6],&HE6
+    ;ж
+SUBS=[&H10,&HE7],&HF7
+    ;ч
+SUBS=[&H10,&HA7],&HE7
+    ;з
+SUBS=[&H10,&HE9],&HF9
+    ;щ
+SUBS=[&H10,&HA9],&HE9
+    ;й
+SUBS=[&H10,&HEA],&HFA
+    ;ъ
+SUBS=[&H10,&HAA],&HEA
+    ;к
+SUBS=[&H10,&HEB],&HFB
+    ;ы
+SUBS=[&H10,&HAB],&HEB
+    ;л
+SUBS=[&H10,&HEC],&HFC
+    ;ь
+SUBS=[&H10,&HAC],&HEC
+    ;м
+SUBS=[&H10,&HED],&HFD
+    ;э
+SUBS=[&H10,&HAD],&HED
+    ;н
+SUBS=[&H10,&HEE],&HFE
+    ;ю
+SUBS=[&H10,&HAE],&HEE
+    ;о
+SUBS=[&H10,&HEF],&HFF
+    ;я
+SUBS=[&H10,&HAF],&HEF
+    ;п

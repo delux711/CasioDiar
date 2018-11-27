@@ -101,6 +101,18 @@ void myRtcGetTime(uint8_t *buff) {
 	buff[5] = (uint8_t)(((RTC->TR & RTC_TR_SU)  >> RTC_TR_SU_Pos)  + '0');
 }
 
+void myRtcGetTimeString(uint8_t *buff) {
+	buff[0] = (uint8_t)(((RTC->TR & RTC_TR_HT)  >> RTC_TR_HT_Pos)  + '0');
+	buff[1] = (uint8_t)(((RTC->TR & RTC_TR_HU)  >> RTC_TR_HU_Pos)  + '0');
+	buff[2] = ':';
+	buff[3] = (uint8_t)(((RTC->TR & RTC_TR_MNT) >> RTC_TR_MNT_Pos) + '0');
+	buff[4] = (uint8_t)(((RTC->TR & RTC_TR_MNU) >> RTC_TR_MNU_Pos) + '0');
+	buff[5] = ':';
+	buff[6] = (uint8_t)(((RTC->TR & RTC_TR_ST)  >> RTC_TR_ST_Pos)  + '0');
+	buff[7] = (uint8_t)(((RTC->TR & RTC_TR_SU)  >> RTC_TR_SU_Pos)  + '0');
+	buff[8] = '\0';
+}
+
 void myRtcSaveActualTime(void) {
     PWR->CR1 |= PWR_CR1_DBP;  // write protection OFF for back up registers
     RTC->BKP0R = RTC->TR;     // save actual time to back up register

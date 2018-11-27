@@ -6,6 +6,7 @@
 #include "serialPort.h"
 #include "casioDiar.h"
 #include "timerLib.h"
+#include "serialPort_u1.h"
 #include <stdio.h>
 
 // SYSCLK - 4MHz
@@ -29,7 +30,7 @@ static uint64_t *lcdRam2;
 static uint64_t *lcdRam3;
 static uint64_t *lcdRam4;
 static uint8_t data[] = { 'A', 255, 255, 255, 255, 255 };*/
-static uint8_t testDiar[] = { "Pavol Pusztai, Slovinska 1, 05342 Krompachy." };
+static uint8_t testDiar[] = { "Ing.Pavol Pusztai, Slovinska 1, 05342 Krompachy." };
 static uint8_t receiveBuff[50];
 static uint8_t receiveP = 0;
 int main(void) {
@@ -39,6 +40,8 @@ int main(void) {
     uint32_t count = 0;
     uint8_t stredTmp = 0;
     
+	SPu1_init();
+	
     load_ramcode();
     tl_Init();
     TIM_delayInit();
@@ -83,8 +86,9 @@ int main(void) {
         if(TIM_delayIsTimerDown(DELAY_MAIN_LCD_SHOW) == true) {
             if((myRtcIsNewTime() == true) && (lcdIsShift == false)) {
                 myRtcSaveActualTime();
-                myRtcGetTime(buff);
-                LCD_GLASS_DisplayStringTime(buff);
+                myRtcGetTimeString(buff);
+                LCD_GLASS_DisplayString(buff);
+                //LCD_GLASS_DisplayStringTime(buff);
             }
         }
         switch(CD_task()) {

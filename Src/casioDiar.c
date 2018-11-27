@@ -5,8 +5,9 @@
 #include "getJoystick.h"
 #include <stdio.h>
 
-#define CD_TIMEOUT_DEF    (30000u)
+#define CD_TIMEOUT_DEF      (30000u)
 #define CD_MAX_NOT_ANSWERE  (5u)
+#define CD_HEADER_SIZE      (15u)
 
 /*
 typedef enum _cd_waitChar_e {
@@ -23,6 +24,7 @@ typedef enum _cd_state_send_e {
     CD_STATE_SENDING_LF,        // 0x0A
     CD_STATE_SENDING_LF_WAIT,
     CD_STATE_SENDING_COLON,     // dvojbodka
+    CD_STATE_SENDING_HEADER,
     CD_STATE_SENDING_DATA
 } cd_state_sending_e;
 
@@ -52,8 +54,9 @@ static cd_state_sending_e cd_state_send = CD_STATE_SENDING_CLEAR_BUFF;
 static bool cd_receiving = false;
 static uint16_t cd_toPrepareOffset;
 static uint32_t cd_timeout = CD_TIMEOUT_DEF;
-static uint8_t cd_buffer[300];
-static uint16_t cd_buffPointer = 0u;
+static uint8_t cd_recBuff[300];
+static uint16_t cd_pointerRecBuff;
+static uint16_t cd_buffPointerToSendBuff = 0u;
 static uint8_t *cd_toSendPointer;
 static uint8_t cd_buffToSend1[] = ":02000002A0005C:0580000041686F6A31C8:00000001FF";
 static uint8_t cd_buffToSendNewNote[] = ":02000002A0005C";
@@ -142,7 +145,16 @@ void CD_task_send(void) {
     } else if(cd_state_send == CD_STATE_SENDING_COLON) {
         SPu1_sendChar(0x11u);
         TIM_delaySetTimer(DELAY_TIMER_CASIO_DIAR, 150u);
-        cd_state_send = CD_STATE_SENDING_DATA;
+        cd_pointerRecBuff = 0u;
+        cd_state_send = CD_STATE_SENDING_HEADER;
+    } else if(cd_state_send == CD_STATE_SENDING_HEADER) {
+        if(cd_pointerRecBuff < CD_HEADER_SIZE) {
+            if(true == SPu1_isNewData()) {
+                cd_recBuff[cd_pointerRecBuff++] = SPu1_getData();
+            }
+        } else {
+            cd_state_send = CD_STATE_SENDING_DATA;
+        }
     } else if(cd_state_send == CD_STATE_SENDING_DATA) {
         cd_state_send = CD_STATE_SENDING_SLEEP;
         cd_state = CD_STATE_ERROR;
@@ -334,12 +346,12 @@ uint8_t CD_buffToValue(uint8_t chHi, uint8_t chLo) {
 }
 
 void CD_buffToSendClear(void) {
-    cd_buffPointer = 0u;
+    cd_buffPointerToSendBuff = 0u;
 }
 
 void CD_buffToSendAdd(uint8_t ch) {
-    if(cd_buffPointer < (uint16_t) sizeof(cd_buffToSendBuff)) {
-        cd_buffToSendBuff[cd_buffPointer++] = ch;
+    if(cd_buffPointerToSendBuff < (uint16_t) sizeof(cd_buffToSendBuff)) {
+        cd_buffToSendBuff[cd_buffPointerToSendBuff++] = ch;
     }
 }
 
@@ -378,7 +390,8 @@ void CD_sendBuff(uint8_t *buff, cd_state_receiving_e newState, uint16_t setTim) 
 uint8_t CD_receive(void) {
     cd_state = CD_STATE_SENDING;
     cd_state_send = CD_STATE_SENDING_CLEAR_BUFF;
-    return cd_buffer[0];
+    cd_pointerRecBuff = 0u;
+    return cd_recBuff[0];
 }
 
 void CD_sendToDiarConst(uint8_t *buff) {

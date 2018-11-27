@@ -123,6 +123,7 @@ static uint8_t mx_lcd_buffSize;
 static bool mx_lcd_isShift = false;
 
 static void Convert(uint8_t* Char, Point_Typedef Point, DoublePoint_Typedef Colon);
+static void LCD_GLASS_show_part(void);
 
 /* USER CODE END 0 */
 
@@ -325,33 +326,53 @@ void MX_LCD_Init(void)
 /* USER CODE BEGIN 1 */
 
 bool MX_LCD_Task(void) {
-    uint8_t ch, pointer;
-    DigitPosition_Typedef position;
     if((TIM_delayIsTimerDown(DELAY_MAIN_LCD_SHOW) == true) && (mx_lcd_isShift == true)) {
         TIM_delaySetTimer(DELAY_MAIN_LCD_SHOW, 500u);
-        while((LCD->SR & LCD_SR_UDR) != 0u);
-
-        position = LCD_DIGIT_POSITION_1;
-        pointer = mx_lcd_buffP;
-
-        while(position <= LCD_DIGIT_POSITION_6) {
-            if(pointer < mx_lcd_buffSize) {
-                ch = mx_lcd_buff[++pointer];
-            } else {
-                ch = ' ';
-            }
-            /* Write one character on LCD */
-            LCD_GLASS_WriteChar(&ch, POINT_OFF, DOUBLEPOINT_OFF, position);
-            position++;
-        }
-        mx_lcd_buffP++;
-        if(mx_lcd_buffP == (mx_lcd_buffSize - 1u)) {
-            mx_lcd_isShift = false;
-        }
-        /* Update the LCD display */
-        LCD->SR |= LCD_SR_UDR;
+        LCD_GLASS_show_part();
     }
     return mx_lcd_isShift;
+}
+
+void LCD_GLASS_show_part(void) {
+    uint8_t ch, pointer;
+    Point_Typedef point;
+    DoublePoint_Typedef colon;
+    DigitPosition_Typedef position = LCD_DIGIT_POSITION_1;
+
+    if((mx_lcd_buff[mx_lcd_buffP] == '.') || (mx_lcd_buff[mx_lcd_buffP] == ':')) {
+        mx_lcd_buffP++;
+    }
+    pointer = mx_lcd_buffP;
+    
+     while((LCD->SR & LCD_SR_UDR) != 0u);
+    while(position <= LCD_DIGIT_POSITION_6) {
+        if(pointer < mx_lcd_buffSize) {
+            ch = mx_lcd_buff[pointer++];
+        } else {
+            ch = ' ';
+        }
+        if(mx_lcd_buff[pointer] == '.') {
+            point = POINT_ON;
+            pointer++;
+        } else {
+            point = POINT_OFF;
+        }
+        if(mx_lcd_buff[pointer] == ':') {
+            colon = DOUBLEPOINT_ON;
+            pointer++;
+        } else {
+            colon = DOUBLEPOINT_OFF;
+        }
+        /* Write one character on LCD */
+        LCD_GLASS_WriteChar(&ch, point, colon, position);
+        position++;
+    }
+    mx_lcd_buffP++;
+    if(mx_lcd_buffP >= (mx_lcd_buffSize - 1u)) {
+        mx_lcd_isShift = false;
+    }
+    /* Update the LCD display */
+    LCD->SR |= LCD_SR_UDR;
 }
 
 /**
@@ -361,38 +382,26 @@ bool MX_LCD_Task(void) {
   */
 void LCD_GLASS_DisplayString(uint8_t* ptr)
 {
-    uint8_t ch;
+    uint8_t ch, size;
 
-    DigitPosition_Typedef position = LCD_DIGIT_POSITION_1;
+    size = 0u;
     mx_lcd_buffP = 0u;
     mx_lcd_buffSize = 0u;
     mx_lcd_isShift = false;
     do {
         ch = ptr[mx_lcd_buffSize];
         mx_lcd_buff[mx_lcd_buffSize++] = ch;
+        if((ch == '.') || (ch == ':'))  {
+            size++;
+        }
     } while((ch != '\0') && (mx_lcd_buffSize < MX_LCD_MAX_BUFFER));
     mx_lcd_buff[MX_LCD_MAX_BUFFER - 1] = '\0';
     mx_lcd_buffSize--;
-    if(mx_lcd_buffSize > 6u) {
+    if((mx_lcd_buffSize - size) > 6u) {
         mx_lcd_isShift = true;
         TIM_delaySetTimer(DELAY_MAIN_LCD_SHOW, 500u);
     }
-
-	while((LCD->SR & LCD_SR_UDR) != 0u);    // LCD driver must be the actual before any access
-    /* Send the string character by character on lCD */
-    while ((*ptr != '\0') && (position <= LCD_DIGIT_POSITION_6)) {
-        /* Write one character on LCD */
-        //LCD_GLASS_WriteChar(ptr, POINT_OFF, DOUBLEPOINT_OFF, position);
-        LCD_GLASS_WriteChar(ptr, POINT_OFF, DOUBLEPOINT_OFF, position);
-
-        /* Point on the next character */
-        ptr++;
-
-        /* Increment the character counter */
-        position++;
-    }
-    /* Update the LCD display */
-    LCD->SR |= LCD_SR_UDR;
+    LCD_GLASS_show_part();
 }
 
 void LCD_GLASS_DisplayStringTime(uint8_t* ptr)
