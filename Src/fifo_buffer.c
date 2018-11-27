@@ -13,7 +13,7 @@ static uint8_t FIFO_sizeOfBuff;
 static uint8_t *FIFO_recBuff;
 static uint8_t FIFO_actualConfig;
 static struct FIFO_BUFF_CONFIG FIFO_configurations[FIFO_COUNT_OF_CONFIGURATIONS];
-static void FIFO_saveNewConfig(uint8_t configNum);
+static void FIFO_loadNewConfig(uint8_t configNum);
 
 void FIFO_init(uint8_t configNum, uint8_t *buff, uint8_t sizeOfBuff) {
     FIFO_configurations[configNum].buff = buff;
@@ -28,22 +28,28 @@ void FIFO_init(uint8_t configNum, uint8_t *buff, uint8_t sizeOfBuff) {
     FIFO_recBuff = FIFO_configurations[configNum].buff;
     FIFO_sizeOfBuff = FIFO_configurations[configNum].sizeOfBuff;
     */
-    FIFO_saveNewConfig(configNum);
+    FIFO_loadNewConfig(configNum);
 }
 
 void FIFO_changeConfig(uint8_t configNum) {
     if(configNum != FIFO_actualConfig) {
         FIFO_configurations[FIFO_actualConfig].pRecStart = FIFO_pStart;
         FIFO_configurations[FIFO_actualConfig].pRecEnd = FIFO_pEnd;
-        FIFO_saveNewConfig(configNum);
+        FIFO_loadNewConfig(configNum);
     }
 }
 
-void FIFO_saveNewConfig(uint8_t configNum) {
+void FIFO_loadNewConfig(uint8_t configNum) {
     FIFO_recBuff = FIFO_configurations[configNum].buff;
     FIFO_sizeOfBuff = FIFO_configurations[configNum].sizeOfBuff;
     FIFO_pStart = FIFO_configurations[configNum].pRecStart;
     FIFO_pEnd = FIFO_configurations[configNum].pRecEnd;
+}
+
+void FIFO_clearBuffer(void) {
+    FIFO_configurations[FIFO_actualConfig].pRecStart = 0u;
+    FIFO_configurations[FIFO_actualConfig].pRecEnd = 0u;
+    FIFO_loadNewConfig(FIFO_actualConfig);
 }
 
 uint8_t FIFO_getData(void) {

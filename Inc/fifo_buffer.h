@@ -68,5 +68,6 @@ extern bool FIFO_isUnreadData(void);
 */
 extern bool FIFO_isPutDataReady(void);
 extern uint8_t FIFO_getData(void);
+extern void FIFO_clearBuffer(void);
 
 #endif // _FIFO_BUFFER

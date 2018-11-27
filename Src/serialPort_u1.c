@@ -166,6 +166,14 @@ uint8_t SPu1_getData(void) {
     */
     return FIFO_getData();
 }
+
+void SPu1_clearReceivedData(void) {
+    FIFO_clearBuffer();
+    while((USART1->ISR & USART_ISR_RXNE) != 0u) {
+        (void)USART1->RDR;
+    }
+}
+
 /*
 uint8_t FIFO_getData(void) {
     //SPu1_bNewData = false;

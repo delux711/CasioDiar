@@ -27,31 +27,31 @@ typedef struct CLOCK_STRING_s {
 CLOCK_STRING_t rtcStr;
 
 void myRtcInit(void) {
-   unsigned char timeout = 0;
-   RCC->APB1ENR1 |= RCC_APB1ENR1_PWREN_Msk;
-   PWR->CR1 |= PWR_CR1_DBP;
+    unsigned char timeout = 0;
+    RCC->APB1ENR1 |= RCC_APB1ENR1_PWREN_Msk;
+    PWR->CR1 |= PWR_CR1_DBP;
 
-   RTC->WPR = 0xCA;
-   RTC->WPR = 0x53;
-	 RCC->BDCR |= RCC_BDCR_RTCEN;
-   RTC->CR &= ~RTC_CR_WUTE;
-	 RTC->CR &= ~RTC_CR_WUCKSEL;
-   RTC->CR |= (0U << RTC_CR_WUCKSEL_Pos);
-   RTC->WUTR = 2047;
-   RTC->CR |= RTC_CR_WUTE;
+    RTC->WPR = 0xCA;
+    RTC->WPR = 0x53;
+     RCC->BDCR |= RCC_BDCR_RTCEN;
+    RTC->CR &= ~RTC_CR_WUTE;
+     RTC->CR &= ~RTC_CR_WUCKSEL;
+    RTC->CR |= (0U << RTC_CR_WUCKSEL_Pos);
+    RTC->WUTR = 2047;
+    RTC->CR |= RTC_CR_WUTE;
 
-   // initialization TIME and DATE
-   RTC->ISR |= RTC_ISR_INIT;
-   do {
-		 timeout--;
-   } while(timeout && !(RTC->ISR & RTC_ISR_INITF));
-   RTC->TR = RTC->BKP0R;  // TIME
-   // RTC->DR = 0;        // DATE
-   RTC->ISR &= ~RTC_ISR_INIT;
+    // initialization TIME and DATE
+    RTC->ISR |= RTC_ISR_INIT;
+    do {
+         timeout--;
+    } while(timeout && !(RTC->ISR & RTC_ISR_INITF));
+    RTC->TR = RTC->BKP0R;  // TIME
+    // RTC->DR = 0;        // DATE
+    RTC->ISR &= ~RTC_ISR_INIT;
 
-   PWR->CR1 &= ~PWR_CR1_DBP;
-   //RCC->APB1ENR1 &= ~RCC_APB1ENR1_PWREN_Msk;
-   myRtcUpdate();
+    PWR->CR1 &= ~PWR_CR1_DBP;
+    //RCC->APB1ENR1 &= ~RCC_APB1ENR1_PWREN_Msk;
+    myRtcUpdate();
 }
 
 // void myRtcLcd(void) {
@@ -117,6 +117,20 @@ void myRtcSaveActualTime(void) {
     PWR->CR1 |= PWR_CR1_DBP;  // write protection OFF for back up registers
     RTC->BKP0R = RTC->TR;     // save actual time to back up register
     PWR->CR1 &= ~PWR_CR1_DBP; // protection ON
+}
+
+void myRtcSetTime(uint8_t *buff) {
+    uint32_t temp;
+    temp  = (buff[0u] - '0') << RTC_TR_HT_Pos;
+    temp |= (buff[1u] - '0') << RTC_TR_HU_Pos;
+    temp |= (buff[2u] - '0') << RTC_TR_MNT_Pos;
+    temp |= (buff[3u] - '0') << RTC_TR_MNU_Pos;
+    temp |= (buff[4u] - '0') << RTC_TR_ST_Pos;
+    temp |= (buff[5u] - '0') << RTC_TR_SU_Pos;
+    PWR->CR1 |= PWR_CR1_DBP;  // write protection OFF for back up registers
+    RTC->BKP0R = temp;        // save time to back up register
+    PWR->CR1 &= ~PWR_CR1_DBP; // protection ON
+    myRtcInit();
 }
 
 bool myRtcIsNewTime(void) {

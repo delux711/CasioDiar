@@ -98,7 +98,18 @@ int main(void) {
                 led1_off();
                 led2_off();
                 break;
-            case CD_STATE_SENDED_NOTE:  LCD_GLASS_DisplayString((uint8_t*) "New note received"); break;
+            case CD_STATE_SENDED_CALENDAR:  LCD_GLASS_DisplayString((uint8_t*) "CALENDAR ");  break;
+            case CD_STATE_SENDED_TELEPHONE: LCD_GLASS_DisplayString((uint8_t*) "TELEPHONE "); break;
+            case CD_STATE_SENDED_NOTE:      LCD_GLASS_DisplayString((uint8_t*) "NOTE ");      break;
+            case CD_STATE_SENDED_SCHEDULE:  LCD_GLASS_DisplayString((uint8_t*) "SCHEDULE ");  break;
+            case CD_STATE_SENDED_REMINDER:  LCD_GLASS_DisplayString((uint8_t*) "REMINDER ");  break;
+            case CD_STATE_SENDED_REMINDER2: LCD_GLASS_DisplayString((uint8_t*) "REMINDER ");  break;
+            case CD_STATE_SENDED_FREE_FILE: LCD_GLASS_DisplayString((uint8_t*) "FREE FILE "); break;
+            case CD_STATE_SENDED_DATA:
+                myRtcSetTime(CD_getBuffer());
+                sprintf((char*)buff, "Set time to: %s", CD_getBuffer());
+                LCD_GLASS_DisplayString(buff);
+                break;
             default: break;
         }
         

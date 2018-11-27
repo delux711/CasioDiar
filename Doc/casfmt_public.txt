@@ -1,0 +1,559 @@
+CASFMT.TXT - Public Version
+(c) IMSL Software 1995
+
+CASIO DIGITAL DIARY DATA TRANSMISSION FORMAT
+--------------------------------------------
+
+The CASIO SF-series pocket Digital Diary, also known as the B.O.S.S.
+(Business Online Scheduling System) in the United States can communicate
+with a personal computer, allowing it to back-up and restore data
+easily, and allowing the PC to be used to maintain the Diary data base.
+
+This document describes the CASIO-PC interface and communications
+protocol.  The communications protocol and data format used by the
+Digital Diary is described in sufficient detail to write a custom
+communications program for it on any computer.	However, this document
+does not contain complete information on all the Digital Diary data
+formats and model variations.  Contact IMSL Software for further
+information.
+
+Casio does not publish any official information on the Digital Diary
+communications protocol or data format.  The information contained in
+this document has been derived from and tested primarily on the SF-7500
+and SF-9700 models.  It has been implemented and widely distributed in
+the shareware programs CASIF/DOS and CASIF/Win since 1990, accumulating
+additional user input from newer models.
+
+
+1. CASIO RS232 INTERFACE
+------------------------
+
+The CASIO SF-series Digital Diary has a built-in serial interface and
+communications program. It can communicate directly with another
+SF-series unit, but to connect to a standard RS232 port it requires an
+external adaptor consisting of a voltage level converter and a 9 or
+25-pin interface cable.
+
+The CASIO FA-100 or FA-150 package is designed to connect the Digital
+Diary to an IBM PC.  The package consists of:
+
+    - An interface box with a 25-pin RS232 jack and a CASIO
+      SB-60 (3-pin) jack
+
+    - The SFD interface program on IBM-PC floppy disk (5.25" and
+      3.5" formats)
+
+    - Manual (skimpy on technical details)
+
+No provision is made for computers other than IBM PC in the instructions
+and the SFD program is PC-specific, but the interface is standard RS232
+which should work on any computer serial port. However, the original
+version was designed for an EGA rather than a VGA monitor and did not
+work with all serial port UARTs. These faults were corrected in the
+FA-150 package.
+
+The FA-100 box contains a battery-powered voltage level converter, which
+converts between the 6-volt serial I/O of the Digital Diary and the
+required minimum 7.5 volt RS232 level.
+
+The I/O jack of the Digital Diary is a standard serial port operating at
+low TTL voltage.  The 3 pins are Ground (the tip), Send (middle), and
+Receive.  The plug size is 2.5mm, but may vary slightly on some later
+models, causing a loose plug fit.  The RS232 adaptor cable must connect
+these 3 pins to a 25-pin RS232 plug on pins 2,3,7.  CTS/RTS and
+DSR/DTR/CD can be connected as usual for a null modem.	However, voltage
+level conversion is required.  Don't try to connect directly, or you'll
+likely blow up the Casio unit.
+
+The RS232 cable required is inadequately specified in the CASIO
+FA-100 manual, but it is a standard null modem cable with SND and RCV
+crossed.  The FA-100 interface seems to ignore the other pins (as it
+should).
+
+Travelling Software developed their own FA-120 B.O.S.S. interface
+consisting of an RS232-Casio cable with the voltage level converter
+built in, and TS's own interface program BOSS, designed to work with
+Sidekick on the PC.  This package was later updated and sold under the
+name PCLink by Casio USA until 1995.
+
+The voltage level converter electronics in the Travelling Software
+cable are powered directly from unused serial port pins, removing the
+need for batteries.
+
+In 1995 Casio USA dropped PCLink and began selling a new Windows-based
+package called WinLink, developed by Polaris Software based on their
+Packrat PIM. The Casio interface portions of this program are licensed
+from Intellilink, a separate software product which supports many
+palmtops. The serial cable in this package is the same as PCLink. PCLink
+is still widely available, but the last version (3.5d) does not support
+all the more recent Casio models and data types.
+
+The SF-series Digital Diary unit can vary three communications
+parameters:  parity (even/odd/none), data bits (7/8), and baud rate
+(1200/2400/4800/9600). For maximum speed select none/7/9600, although 8
+data bits is more usual. Note that it specifies 2 stop bits, which is
+a bit unusual.	The 2 stop bits are required on input to the unit.
+
+
+
+2. CASIO SF COMMUNICATIONS PROTOCOL
+-----------------------------------
+
+The Casio SF-series Digital Diaries use their own unique communications
+protocol. It is not compatible with standard terminal programs. You can
+Print to any serial ASCII device, but you can only transmit/receive with
+another SF-unit or custom program.
+
+The communications sequence between any two SF-series Digital Diaries,
+or between an SF-unit and a PC is:
+
+
+RECEIVER			SENDER
+------------------------------- ---------------------------------------
+
+Place unit in receive mode
+(waiting for input)
+
+				Send CR-LF pair (ASCII 13, 10),
+				repeating until response received
+
+				If no response after 15 CR-LF pairs,
+				send " (ASCII 34) to abort transmission
+				and quit
+
+Respond  (ASCII 17/Ctrl-Q/XON)
+to indicate Ready after
+receiving a CR-LF pair
+
+				Send item type identification field
+
+May send # (ASCII 35)
+
+				Send a series of entry fields making up
+				one complete item record of the
+				specified type
+
+May send  (ASCII 19/Ctrl-S/
+XOFF) to request a temporary
+halt (too much data too fast
+for it)
+
+				Wait for XON before continuing
+
+Sends XON (ASCII 17) when ready
+to continue after XOFF
+
+				Send record terminating field
+
+				Wait for # acknowledgement
+
+
+
+
+
+
+May send ? (ASCII 63) or
+$ (ASCII 36) to indicate
+error in received field
+
+  or
+
+Respond # (ASCII 35) to indicate
+"Received OK, continue" after
+receiving the last character of
+the record terminating field
+
+				Continue with next item record (if any)
+
+Respond with # after each	...
+record
+
+...
+
+Send " (ASCII 34) at any time
+to abort transmission
+
+				Send end-of-transmission field after
+				last item record
+
+				 or
+
+				Send ! (ASCII 33) to stop transmission
+
+Stop receiving.
+
+------------------------------- ---------------------------------------
+
+
+No count of the number of records or entry fields per record to be sent
+is given ahead of time.  The end of an item record is recognized by the
+terminating field.  The end of a multi-record transmission is marked by
+an additional special terminating field.  Prior to the final terminating
+field of a multi-record transmission there is no indication if more
+records will follow:  the receiver must keep receiving until either the
+final terminating field is received, or a stop character (!) is
+received.
+
+All data fields are sent as ASCII hex digit characters (0-9, A-F), with
+2 sequential ASCII hex digits corresponding the hex value of each data
+byte. For example, an ASCII "A" data character is sent as the two ASCII
+characters "41". CASIO probably chose to do it this way to allow for
+7-bit ASCII format, but it takes twice as long to transmit as the actual
+8-bit data byte values. In fact, the transmission format is very
+inefficient in several other aspects as well:  redundant offset and
+field separator values, a lengthy record terminator which could be a
+single character, etc.
+
+
+Transmission Speed Limits:
+
+When the Digital Diary is sending a series of items it is common for
+there to be delays of up to 1/2 second between data items while the unit
+searches its memory for the next item to transmit. It is also common for
+there to be an "XOFF" followed by a delay of up to 1/2 second after the
+unit has received a lengthy item.
+
+The Digital Diary has problems accepting input data at too high a rate
+in spite of the XOFF/XON protocol.  Long text data records at 9600 baud
+are a particular problem, resulting in multiple XOFFs in a row.
+or a "?" response indicating an error in reception.
+
+Transmission speed should be throttled back at 9600 baud by allowing at
+least 0.3 msec. between characters.  This does not slow down the
+overall rate of data acceptance by the Digital Diary; there is normally
+a long pause initiated by XOFF after receiving a record, and the pause
+is proportionately reduced if the transmission speed is throttled back.
+This may be because Casio uses the microprocessor in the Diary to
+emulate a serial port UART by directly "polling" the serial input bit,
+and it simply isn't fast enough to keep up (just a guess).
+
+
+Data Types:
+
+The order of fields in transmission is the same as they appear during
+data entry on the Digital Diary, i.e.
+
+Tel:		Name, Telephone no., Address, Free1, ..., Free6
+		(up to 6 free fields)
+
+BCard:		Company, Name, Telephone no., Position, Dept., P.O. Box,
+		Address, Telex, Fax, Free1, ..., Free6
+		(up to 6 free fields)
+
+Memo:		Text
+
+Sched:		Date, Time, [Alarm time,] Item
+
+Calendar:	Monthdate, Highlights
+
+ToDo:		Date, Time, Item
+
+Expense:	Date, Amount, Form of Payment, Category, Receipt (Y/N)
+		Business (Y/N), Description
+
+
+Telephone, Schedule, Memo, and Calendar items are supported on all
+models. The other data types are available only on certain models. ToDo,
+Expense, Free Files, and Spreadsheets are not documented here.
+
+
+RECORD FORMAT:
+
+The general field format for all fields in a record is:
+
+	:llffoottdd...ddcc
+
+where:
+
+	:	- Field always begins with leading colon
+
+	ll	- 2 digit (1-byte) field data length, number of bytes
+		  of data (dd) in field, not counting llffoott and cc
+
+		  Maximum value is 80 hex (128)
+
+		  Zero length always indicates a record terminating
+		  field
+
+	ff	- Flag byte:
+
+			00 - type identification field or
+			     record terminating field
+			80 - text data field or MARK terminating field
+
+			C0 - schedule alarm field
+			D0 - calendar field
+			E0 - time field
+			F0 - date field
+
+	oo	- Low byte of data offset (bits 0-7)
+
+		  High bit of data offset (bit 8) is in low bit of flag
+		  byte
+
+	tt	- Sub-type, 02 for type identification field,
+			    01 for record terminator field,
+			    FF for transmission terminator field,
+			    00 for all others
+
+	dd	- One or more data bytes
+
+	...
+
+	cc	- Checksum
+
+
+The length is the number of bytes of actual data in the field, not
+counting the length byte itself, flag, offset, sub-type, or checksum.
+Remember, there are two ASCII digits per byte.	The length is not
+allowed to exceed 80 hex (128) in CASIO's transmission protocol; longer
+fields are broken up into multiple sequential fields for transmission.
+The end of such a field can be recognized only by the presence of the
+field terminating character 0A (LineFeed) as the last data byte.
+
+The checksum is the simple running checksum of all bytes in the record,
+beginning with and including the length byte, continuing to and
+including the checksum byte itself.  The total of all bytes (including
+the checksum itself) must be 00 in the low 2 hex digits, where the
+checksum byte value is adjusted to make this true.  A checksum error
+indicates a faulty transmission.
+
+The flag byte ff indicates the type of field, with the sub-type byte tt
+indicating a sub-type in some cases.
+
+
+TYPE IDENTIFICATION FIELD
+
+A transmission always begins with a type identification field,
+indicating what type of item data follows (i.e. memo, bus.card,
+telephone, schedule, or calendar).  The flag byte in this case is 00,
+the "offset" is always 00 and the sub-type byte is 02.  The data type to
+follow is determined from the first data byte value:
+
+	80	- calendar
+	90	- telephone
+	A0	- memo
+	B0	- schedule
+	C0	- business card
+
+There is always a second data byte of 00, and there is no other data in
+the record, so the field data length is always 02.
+
+Example of type identification field:
+
+	:02000002A0005C
+	  ||   | |  |
+	  ||   | |  checksum 02+00+00+02+A0+00+5C = x00
+	  ||   | |
+	  ||   | type A0 is memo
+	  ||   |
+	  ||   type byte 02 indicates type identification field
+	  ||
+	  |flag value always 00
+	  |
+	  data length always 02 (the 2 bytes A000 in this record)
+
+The type identification field is sent only prior to the first item of
+each type; it not repeated prior to each item in a multi-item
+transmission.  When transmitting "all" data, a type identification field
+is sent prior to the start of the items of each type.
+
+
+DATA FIELDS
+
+The type identification field is followed by a set of item
+records. Each item record is made up of a number of data fields.
+Data fields have one of four formats, depending on the data type
+they contain: text, date, time, or calendar.
+
+Text data fields always have a flag byte of 80.
+
+Example of text data field "1234":
+
+	:0480000031323334B2
+	  || |	 |	 |
+	  || |	 |	 checksum 04+80+00+00+31+32+33+34+B2 = x00
+	  || |	 |
+	  || |	 data bytes for entry field "1234"
+	  || |
+	  || offset is 0 for first entry
+	  ||
+	  |flag value 80 indicates text data field
+	  |
+	  field length is 4 data bytes
+
+The offset is cumulative.  The first text data field of a record always
+begins at offset zero, the 2nd at 0 + the length of the 1st field, the
+3rd at the offset of the 2nd field plus the length of the 2nd field,
+etc.  Note that if (and only if) there is a following data field in the
+record, a field separator character (0A = LineFeed) is added to the end
+of the field data.  The field separator is counted in the length byte
+and the subsequent offsets.
+
+Memo, telephone, and business card item records consist of one or more
+text fields.  A missing/empty data entry which is sequence-dependent
+(i.e. like those in a telephone or business card item record) is marked
+by a text field containing only a separator character 0A.
+
+As noted above, text fields longer than 128 bytes are broken up into
+multiple fields for transmission.  Only the last has a trailing field
+separator.
+
+If an entry contains one or more Carriage Return (CR) characters in the
+text, it is broken into separate fields ending at the CR for
+transmission.  When a CR is received as the last character in a field,
+the next text data field should be appended to it rather than beginning
+a new text field of the item record. There is no field separator 0A in
+this case.
+
+
+Date/time entry fields:
+
+Date entry fields have a special format marked by a flag byte of F0.
+The date entry field appears as the first field when a schedule or
+calendar item is transmitted.  For a schedule item it is followed
+(optionally) by time record(s) and a text data field for the schedule
+entry.
+
+
+Schedule item transmission sequence:
+
+	Date field
+	(Time field - optional)
+	(Alarm time field - optional)
+	Text data field for schedule item
+
+The time field, if present, identifies the start time of the schedule
+item, and may also identify an end time for the schedule item.	The
+alarm time field, if present, specifies the time of the associated
+schedule alarm.
+
+When multiple schedule items for a single day are transmitted, each item
+is transmitted seperately beginning with a date field.
+
+
+Date field format:
+
+	:0AF00000yyyyyyyy2Dmmmm2Dddddcc
+		 |	 | |   | |
+		 |	 | |   | day (01-1F)
+		 |	 | |   |
+		 |	 | |   dash (-)
+		 |	 | |
+		 |	 | month (01-0C)
+		 |	 |
+		 |	 dash (-)
+		 |
+		 year (19xx or 20xx)
+
+
+Time field format:
+
+	:05E00000hhhh3Ammmmmcc
+		 |   | |
+		 |   | minute (00-3B)
+		 |   |
+		 |   colon :
+		 |
+		 hour (01-18)
+
+For a schedule appointment with time duration specified (start and end
+times):
+
+	:0BE00000hhhh3Ammmmm7Ehhhh3Ammmmcc
+		 |	     ||
+		 |	     |end time (hh:mm)
+		 |	     |
+		 |	     separator character ~
+		 |
+		 start time (hh:mm)
+
+
+The hour is always in 24-hour format.
+
+A schedule alarm time field is identical in format except that the flag
+value is C0 instead of E0. Note that the Digital Diary does not allow
+two schedule items to have the same alarm time - it will not store a
+second item with the same alarm time as an existing item.
+
+The SF-M10/R10/R20 series allow alarms to be set for a specific time
+zone.
+
+The SF-9000 series also support term schedule items, with a start and
+end date.
+
+Reminder items (SF-5300 and later) are separate from schedule items and
+have their own format.
+
+Reminder 2 items are supported only on the SF-M10/R10/R20.
+
+Calendar fields:
+
+A calendar month item is transmitted as a date field identifying the
+year and month (day of month always = 01), followed by a calendar
+highlight field which identifies the highlighted days in that month.
+Associated schedule items are transmitted separately.
+
+Calendar item transmission sequence:
+
+	Date field (day=01)
+	Calendar highlight field
+
+
+The highlighted days are identified by the setting of individual bits in
+a string of 32 bits (8 hex digits).  A bit set indicates a highlighted
+day.  The bits are ordered right-to-left, with bit 0 of the rightmost
+(last) digit representing day 1 of the month, and bit 6 of the leftmost
+(first) digit representing day 31 of the month.
+
+
+Calendar highlight field format:
+
+	:04D00000hhhhhhhhcc
+		 |
+		 32 highlight bits
+
+
+
+TERMINATOR FIELDS
+
+A complete item record, consisting of one or more data entries, is
+always terminated by a terminator field which has a field length of 00,
+a flag value of 00, an "offset" value of 00, and a sub-type byte of 01.
+
+Record terminator field:
+
+	:00000001FF	- end of record
+
+A different record terminator field is sent at the end of a "marked"
+item:
+
+	:008000017F	- end of marked record
+
+Following the record terminator field of the last item record in a
+multi-item transmission, a transmission terminator record is added. This
+is similar in format to the record terminator field, but with a sub-type
+byte of FF instead of 01.
+
+Transmission terminator field:
+
+	:000000FF01	- end of multi-item transmission
+
+
+SAMPLE PROGRAM
+
+The following is a sample Microsoft BASIC program for receiving from the
+Digital Diary and printing the characters received in hex digit form:
+
+
+10 OPEN "com1:1200,N,8,1,CS0,DS0" AS 1
+20 IF INPUT$(1,1)<>CHR$(13) THEN 20
+30 IF INPUT$(1,1)<>CHR$(10) THEN 20
+40 PRINT #1,CHR$(17);
+50 A$=INPUT$(1,1)
+60 PRINT A$;
+70 IF A$="F" THEN X=X+1 : ELSE X=0  'not formally correct, but simple
+80 IF X=2 THEN X=0 : BEEP : PRINT#1,"#";
+90 GOTO 50
+
+

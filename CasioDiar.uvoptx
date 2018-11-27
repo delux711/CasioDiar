@@ -157,34 +157,18 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
-          <LineNumber>71</LineNumber>
+          <LineNumber>310</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134225892</Address>
+          <Address>134221636</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>.\Src\serialPort_u1.c</Filename>
+          <Filename>.\Src\casioDiar.c</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\CasioDiar\Src/serialPort_u1.c\71</Expression>
-        </Bp>
-        <Bp>
-          <Number>1</Number>
-          <Type>0</Type>
-          <LineNumber>18</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>134221672</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>1</BreakIfRCount>
-          <Filename>.\Src\fifo_buffer.c</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression>\\CasioDiar\Src/fifo_buffer.c\18</Expression>
+          <Expression>\\CasioDiar\Src/casioDiar.c\310</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>
@@ -201,7 +185,7 @@
         <Ww>
           <count>2</count>
           <WinNumber>1</WinNumber>
-          <ItemText>FIFO_configurations</ItemText>
+          <ItemText>cd_pointerRecBuff</ItemText>
         </Ww>
         <Ww>
           <count>3</count>
@@ -212,6 +196,16 @@
           <count>4</count>
           <WinNumber>1</WinNumber>
           <ItemText>FIFO_recBuff</ItemText>
+        </Ww>
+        <Ww>
+          <count>5</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>FIFO_pStart</ItemText>
+        </Ww>
+        <Ww>
+          <count>6</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>FIFO_pEnd</ItemText>
         </Ww>
       </WatchWindow1>
       <WatchWindow2>

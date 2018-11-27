@@ -12,5 +12,6 @@ extern uint8_t SPu1_getData(void);
 extern uint8_t SPu1_sendChar(uint8_t ch);
 extern uint8_t SPu1_sendBuff(uint8_t *buff, uint8_t length);
 extern uint8_t SPu1_sendString(uint8_t *buff);
+extern void SPu1_clearReceivedData(void);
 
 #endif
