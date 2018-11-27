@@ -10,6 +10,12 @@ typedef unsigned int uint;
 #define led2_on()	  led2_1()
 #define led2_off()	led2_0()
 
+#define HDIO_testPinOn()		do { GPIOD->ODR |= GPIO_ODR_OD0_Msk; }    while(0) // pin ON
+#define HDIO_testPinOff()		do { GPIOD->ODR &= (~GPIO_ODR_OD0_Msk); } while(0) // pin OFF
+#define HDIO_testPinInit() 	do { RCC->AHB2ENR |= RCC_AHB2ENR_GPIODEN_Msk; \
+															 GPIOD->MODER &= (~GPIO_MODER_MODE0_Msk); \
+															 GPIOD->MODER |= (1u << GPIO_MODER_MODE0_Pos); } while(0)
+
 typedef struct _TL_ENU {
 	uint lavo :1;
 	uint pravo:1;

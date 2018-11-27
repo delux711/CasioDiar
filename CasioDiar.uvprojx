@@ -404,6 +404,21 @@
               <FileType>1</FileType>
               <FilePath>.\Src\serialPort.c</FilePath>
             </File>
+            <File>
+              <FileName>casioDiar.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Src\casioDiar.c</FilePath>
+            </File>
+            <File>
+              <FileName>serialPort_u1.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Src\serialPort_u1.c</FilePath>
+            </File>
+            <File>
+              <FileName>timerLib.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Src\timerLib.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -428,6 +443,21 @@
               <FileName>serialPort.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\Inc\serialPort.h</FilePath>
+            </File>
+            <File>
+              <FileName>casioDiar.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Inc\casioDiar.h</FilePath>
+            </File>
+            <File>
+              <FileName>serialPort_u1.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Inc\serialPort_u1.h</FilePath>
+            </File>
+            <File>
+              <FileName>timerLib.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Inc\timerLib.h</FilePath>
             </File>
           </Files>
         </Group>

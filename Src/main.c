@@ -4,7 +4,17 @@
 #include "lcd.h"
 #include "myRTC.h"
 #include "serialPort.h"
+#include "casioDiar.h"
+#include "timerLib.h"
 #include <stdio.h>
+
+// SYSCLK - 4MHz
+// MSI - 4MHz
+// HSI16 - 16MHz
+// 100: HSE clock selected - OFF
+// 101: Main PLL clock selected - OFF
+// 110: LSI clock selected - 32kHz
+// 111: LSE clock selected - OFF
 /*
 static uint64_t *lcdRam1;
 static uint64_t *lcdRam2;
@@ -22,11 +32,13 @@ static uint8_t data[] = { 'A', 255, 255, 255, 255, 255 };*/
 	LED_Off(0);
 	*/
 	tl_Init();
+	TIM_delayInit();
 	//LED_On(0);
 	//LED_Off(0);
 	MX_LCD_Init();
 	LCD_GLASS_Clear();
    myRtcInit();
+		RCC->CFGR |= (4u << RCC_CFGR_MCOPRE_Pos); // MCO / 16 IF 4
 	SP_init();
 	//LCD_GLASS_DisplayString((uint8_t *)"A");
 	/*	LCD_GLASS_DisplayString(data);
@@ -41,9 +53,12 @@ static uint8_t data[] = { 'A', 255, 255, 255, 255, 255 };*/
 	LCD_GLASS_DisplayString((uint8_t*) buff);
 	while(1) {
       myRtcLcd();
+			CD_task();
+		  TIM_handleTask();
 		if(tl_getTlSample().hore) {
 			led1_on();
-         myRtcLcd();
+         //myRtcLcd();
+			CD_sendToDiarConst();
 			//LED_Off(0);
 		} else {
 			led1_off();

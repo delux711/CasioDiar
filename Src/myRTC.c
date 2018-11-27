@@ -104,3 +104,5 @@ void myRtcUpdate(void) {
    rtcStr.sekJed.value = ((RTC->TR & RTC_TR_SU) >> RTC_TR_SU_Pos) + "0";
    rtcStr.sekJed.update = 1;*/
 }
+
+//uint16_t rtcSSRtime

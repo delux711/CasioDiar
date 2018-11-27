@@ -1,15 +1,16 @@
 #include "serialPort.h"
 #include <stdio.h>
-#include <stdbool.h>
 
 typedef unsigned char uchar;
 #define BUFF_MAX  8U
 
-uchar pPlus(void);
-bool pWriteCheck(void);
+static uchar pPlus(void);
+static bool pWriteCheck(void);
 static unsigned char SPbuff[BUFF_MAX];
 static uchar pWrite;
 static uchar pRead;
+static uint8_t ucReadData;
+static bool bNewData = false;
 
 /* We need to implement own __FILE struct */
 /* FILE struct is used from __FILE */
@@ -20,7 +21,7 @@ struct __FILE {
 /* You need this if you want use printf */
 /* Struct FILE is implemented in stdio.h */
 FILE __stdout;
- 
+
 int fputc(int ch, FILE *f) {
    GPIOB->ODR |= (1u << GPIO_ODR_OD6_Pos);
     /* Do your stuff here */
@@ -32,17 +33,22 @@ int fputc(int ch, FILE *f) {
    USART2->CR1 |= USART_CR1_TXEIE;
 
     /* If everything is OK, you have to return character written */
-    GPIOB->ODR &= ~(1u << GPIO_ODR_OD6_Pos);
+    //GPIOB->ODR &= ~(1u << GPIO_ODR_OD6_Pos);
     return ch;
     /* If character is not correct, you can return EOF (-1) to stop writing */
     //return -1;
 }
 
 void USART2_IRQHandler(void) {
-   USART2->ISR;  /* Read the status register to clear the flags. */
-	//if(pWrite) {
-	//while(!(USART2->ISR & USART_ISR_TXE));
-   
+	uint32_t status;
+   status = USART2->ISR;  /* Read the status register to clear the flags. */
+
+	 if((status & USART_ISR_RXNE) != 0u) {
+		 ucReadData = USART2->RDR;
+		 bNewData = true;
+	 } else if((status & USART_ISR_ORE_Msk) != 0u) {
+		 USART2->ICR = USART_ICR_ORECF_Msk;
+	 }
    if(pRead != pWrite) {
       USART2->TDR = SPbuff[pRead++];
       if(BUFF_MAX <= pRead) {
@@ -53,7 +59,7 @@ void USART2_IRQHandler(void) {
    }
 }
 
-bool pWriteCheck(void) {
+static bool pWriteCheck(void) {
    uchar p;
    p = pWrite;
    if((p != pRead) || (~USART2->CR1 & USART_CR1_TXEIE)) {
@@ -62,7 +68,7 @@ bool pWriteCheck(void) {
    return false;
 }
 
-uchar pPlus(void) {
+static uchar pPlus(void) {
    while(!pWriteCheck());
    pWrite++;
    if(BUFF_MAX <= pWrite) {
@@ -97,8 +103,18 @@ void SP_init(void) {
    /* Set TE and RE bits */
 	USART2->CR1 |= USART_CR1_UE;
 	USART2->CR1 |= (USART_CR1_TE | USART_CR1_RE);
+	USART2->CR1 |= USART_CR1_RXNEIE;
    /* Set the global interrupt into enabled state. */
    //NVIC_EnableIRQ(USART1_IRQn);
 	 for(i = 0; i < 15; i++)
 			fputc((int)(i+'A'), 0);
+}
+
+bool SP_isNewData(void) {
+	return bNewData;
+}
+
+uint8_t SP_getData(void) {
+	bNewData = false;
+	return ucReadData;
 }

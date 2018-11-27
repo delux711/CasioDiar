@@ -43,6 +43,7 @@ void tl_Init(void) {
 	GPIOB->MODER |= (1U << GPIO_MODER_MODE2_Pos);	// led4
 	GPIOE->MODER &= (~GPIO_MODER_MODE8_Msk);
 	GPIOE->MODER |= (1U << GPIO_MODER_MODE8_Pos);
+	HDIO_testPinInit();
 /*
   GPIOC->MODER   &= ~(3U << 2* 13);
   GPIOC->OSPEEDR &= ~(3U << 2* 13);
