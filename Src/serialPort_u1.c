@@ -2,7 +2,7 @@
 //#include <stdio.h>
 
 typedef unsigned char uint8_t;
-#define BUFF_MAX  8U
+#define BUFF_MAX  50U
 
 static uint8_t pPlus(void);
 static bool pWriteCheck(void);

@@ -8,7 +8,7 @@
 
 typedef enum {
 	DELAY_TIMER_CASIO_DIAR,
-	DELAY_TL_HORE,
+	DELAY_TL,
 	DELAY_TIMER_TEST,
 	DELAY_TIMER_END
 } TIM_EN_delayTimers;

@@ -21,8 +21,9 @@ static uint64_t *lcdRam2;
 static uint64_t *lcdRam3;
 static uint64_t *lcdRam4;
 static uint8_t data[] = { 'A', 255, 255, 255, 255, 255 };*/
-  int main(void) {
-	char buff[7];
+static uint8_t testDiar[] = { "Pavol Pusztai, Slovinska 1, 05342 Krompachy." };
+int main(void) {
+	char buff[14];
 	uint32_t count = 0;
   uint8_t stredTmp = 0;
 	/*
@@ -52,20 +53,26 @@ static uint8_t data[] = { 'A', 255, 255, 255, 255, 255 };*/
 	sprintf(buff, "%06d", count);
 	LCD_GLASS_DisplayString((uint8_t*) buff);
 	while(1) {
-      myRtcLcd();
-			CD_task();
-		  TIM_handleTask();
+        myRtcLcd();
+        CD_task();
+        TIM_handleTask();
 		if(tl_getTlSample().hore) {
 			led1_on();
-         //myRtcLcd();
-			CD_sendToDiarConst();
-			//LED_Off(0);
+			CD_sendToDiarConst(0u);
 		} else {
 			led1_off();
-			//LED_On(0);
 		}
-		if(tl_getTl().dole) {
+        if(tl_getTlSample().lavo) {
+            myRtcGetTime((uint8_t *)buff);
+            sprintf(&buff[6], "-%06d", ++count);
+            CD_sendToDiarConst((uint8_t *)buff);
+		}
+        if(tl_getTlSample().pravo) {
+            CD_sendToDiarConst(testDiar);
+		}
+        if(tl_getTl().dole) {
 			led2_on();
+			CD_senToDiarEndCommunication();
 		} else {
 			led2_off();
 		}

@@ -107,7 +107,7 @@ void SP_init(void) {
    /* Set the global interrupt into enabled state. */
    //NVIC_EnableIRQ(USART1_IRQn);
 	 for(i = 0; i < 15; i++)
-			fputc((int)(i+'A'), 0);
+			fputc((int)(i+'A'), 0u);
 }
 
 bool SP_isNewData(void) {
