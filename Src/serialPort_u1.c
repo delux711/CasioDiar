@@ -3,9 +3,7 @@
 //#include <stdio.h>
 
 typedef unsigned char uint8_t;
-//#define BUFF_MAX  50U
-#define BUFF_MAX  4U
-#define BUFF_MAX_TEST  8U
+#define BUFF_MAX  50U
 
 //static void SPu1_receiveTest(uint8_t ch);
 static volatile uint8_t SPu1_test;
@@ -17,14 +15,10 @@ static volatile uint8_t SPu1_test2;
 static uint8_t SPu1_pPlus(void);
 static bool SPu1_pWriteCheck(void);
 static unsigned char SPu1_SPbuff[BUFF_MAX];
-static uint8_t SPu1_recBuff[BUFF_MAX];
-static uint8_t SPu1_recBuffTest[BUFF_MAX_TEST];
 static uint8_t SPu1_pWrite;
 static uint8_t SPu1_pRead;
 //static uint8_t SPu1_pRecEnd;
 //static uint8_t SPu1_pRecStart;
-static uint8_t SPu1_ucReadData;
-static bool SPu1_bNewData = false;
 static bool SPu1_bPause = false;
 
 uint8_t SPu1_sendBuff(uint8_t *buff, uint8_t length) {
@@ -70,8 +64,13 @@ void USART1_IRQHandler(void) {
    status = USART1->ISR;  /* Read the status register to clear the flags. */
 
     if((status & USART_ISR_RXNE) != 0u) {
+       /*
        SPu1_ucReadData = USART1->RDR;
        SPu1_bNewData = true;
+       */
+       if(true == FIFO_isPutDataReady()) {
+           FIFO_putData(USART1->RDR);
+       }
 /*
        if(SPu1_pRecStart != (SPu1_pRecEnd + 1u)) {
             if((BUFF_MAX <= SPu1_pRecEnd) && (SPu1_pRecStart != 0u)) {
@@ -122,86 +121,50 @@ static uint8_t SPu1_pPlus(void) {
 }
 
 void SPu1_init(void) {
-    uint8_t i;
-    /*
-    SPu1_pRecEnd = 0u;
-    SPu1_pRecStart = 0xFFu;*/
-    SPu1_test=0xaa;
-    SPu1_test1=0xbb;
-    SPu1_test2=0xcc;
-    FIFO_init(0u, SPu1_recBuff, BUFF_MAX);
-    FIFO_init(1u, SPu1_recBuffTest, BUFF_MAX_TEST);
-    SPu1_test = FIFO_getData();
-    for(i = 0; i < BUFF_MAX; i++) {
-        SPu1_recBuff[i] = 0x30u + i;
-    }
-    for(i = 0; i < BUFF_MAX; i++) {
-        SPu1_recBuffTest[i] = 0x60u + i;
-    }
-    for(i = 0; i < 12; i++) {
-        FIFO_changeConfig(0);
-        FIFO_putData(i);
-        FIFO_putData(i+0x10);
-        FIFO_putData(i+0x20);
-        FIFO_changeConfig(1);
-        FIFO_putData(i+0xA0);
-        FIFO_putData(i+0xB0);
-        FIFO_putData(i+0xC0);
-        FIFO_changeConfig(0);
-        SPu1_test = FIFO_getData();
-        (void)SPu1_test;
-        SPu1_test1 = FIFO_getData();
-        (void)SPu1_test1;
-        FIFO_changeConfig(1);
-        FIFO_test = FIFO_getData();
-        (void)FIFO_test;
-        FIFO_test1 = FIFO_getData();
-        (void)FIFO_test1;
-        //SPu1_test2 = FIFO_getData();
-        //(void)SPu1_test2;
-    }
-    
-    
-   RCC->AHB2ENR |= RCC_AHB2ENR_GPIOBEN_Msk;
-   GPIOB->MODER &= ~(GPIO_MODER_MODE6_Msk);
-   GPIOB->MODER |= (1U << GPIO_MODER_MODE6_Pos);
+    FIFO_init(0u, SPu1_SPbuff, BUFF_MAX);
+    RCC->AHB2ENR |= RCC_AHB2ENR_GPIOBEN_Msk;
+    GPIOB->MODER &= ~(GPIO_MODER_MODE6_Msk);
+    GPIOB->MODER |= (1U << GPIO_MODER_MODE6_Pos);
     GPIOB->OSPEEDR |= (3U << GPIO_OSPEEDR_OSPEED6_Pos);
-   
-   SPu1_pWrite = 0u;//BUFF_MAX;
-   SPu1_pRead = 0u;
-   RCC->AHB2ENR |= RCC_AHB2ENR_GPIODEN_Msk;
-   RCC->APB2ENR |= RCC_APB2ENR_USART1EN_Msk;
-   RCC->CR |= RCC_CR_HSION_Msk;
-   while(!RCC->CR & RCC_CR_HSIRDY_Msk);
-   RCC->CCIPR |= (2U << RCC_CCIPR_USART1SEL_Pos); // 10: HSI16 clock selected as USART1 clock
-   //USART_TX -> PB6
-   //USART_RX -> PB7
-   GPIOB->MODER &= (~(GPIO_MODER_MODE6_Msk | GPIO_MODER_MODE7_Msk));
-   GPIOB->MODER |= ((2U << GPIO_MODER_MODE6_Pos) | (2U << GPIO_MODER_MODE7_Pos));
-   GPIOB->AFR[0] |= ((7U << GPIO_AFRL_AFSEL6_Pos) | (7U << GPIO_AFRL_AFSEL7_Pos));
-   USART1->BRR = (16 * 1000000) / (96 * 100); 
-   /* Enable the USART unit. */
-   //USART1->CR1 = USART_CR1_UE;
-   /* Set TE and RE bits */
-   USART1->CR2 |= (2u << USART_CR2_STOP_Pos);    // set to 2 stop bits
-     (void) USART1->ISR;  /* Read the status register to clear the flags. */
-   USART1->CR1 |= USART_CR1_UE;
-   USART1->CR1 |= (USART_CR1_TE | USART_CR1_RE);
-   USART1->CR1 |= USART_CR1_RXNEIE;
-     NVIC_EnableIRQ(USART1_IRQn);
-   /* Set the global interrupt into enabled state. */
+
+    SPu1_pWrite = 0u;//BUFF_MAX;
+    SPu1_pRead = 0u;
+    RCC->AHB2ENR |= RCC_AHB2ENR_GPIODEN_Msk;
+    RCC->APB2ENR |= RCC_APB2ENR_USART1EN_Msk;
+    RCC->CR |= RCC_CR_HSION_Msk;
+    while(!RCC->CR & RCC_CR_HSIRDY_Msk);
+    RCC->CCIPR |= (2U << RCC_CCIPR_USART1SEL_Pos); // 10: HSI16 clock selected as USART1 clock
+    //USART_TX -> PB6
+    //USART_RX -> PB7
+    GPIOB->MODER &= (~(GPIO_MODER_MODE6_Msk | GPIO_MODER_MODE7_Msk));
+    GPIOB->MODER |= ((2U << GPIO_MODER_MODE6_Pos) | (2U << GPIO_MODER_MODE7_Pos));
+    GPIOB->AFR[0] |= ((7U << GPIO_AFRL_AFSEL6_Pos) | (7U << GPIO_AFRL_AFSEL7_Pos));
+    USART1->BRR = (16 * 1000000) / (96 * 100); 
+    /* Enable the USART unit. */
+    //USART1->CR1 = USART_CR1_UE;
+    /* Set TE and RE bits */
+    USART1->CR2 |= (2u << USART_CR2_STOP_Pos);    // set to 2 stop bits
+    (void) USART1->ISR;  /* Read the status register to clear the flags. */
+    USART1->CR1 |= USART_CR1_UE;
+    USART1->CR1 |= (USART_CR1_TE | USART_CR1_RE);
+    USART1->CR1 |= USART_CR1_RXNEIE;
+    NVIC_EnableIRQ(USART1_IRQn);
+    /* Set the global interrupt into enabled state. */
     //for(i = 0; i < 15; i++)
     //     SPu1_sendChar((uint8_t)(i+'A'));
 }
 
 bool SPu1_isNewData(void) {
-   return SPu1_bNewData;
-   //return SPu1_pRecStart != SPu1_pRecEnd;
+   //return SPu1_bNewData;
+   return FIFO_isUnreadData();
 }
 
 uint8_t SPu1_getData(void) {
+    /*
     SPu1_bNewData = false;
     return SPu1_ucReadData;
+    */
+    return FIFO_getData();
 }
 /*
 uint8_t FIFO_getData(void) {

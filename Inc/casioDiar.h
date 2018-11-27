@@ -10,7 +10,8 @@ typedef enum _cd_state_e {
     CD_STATE_SLEEP,
     CD_STATE_SENDING,
     CD_STATE_ERROR,
-    CD_STATE_RECEIVING
+    CD_STATE_RECEIVING,
+    CD_STATE_SENDED_NOTE
 } cd_state_e;
 
 

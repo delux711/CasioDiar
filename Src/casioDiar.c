@@ -25,6 +25,7 @@ typedef enum _cd_state_send_e {
     CD_STATE_SENDING_LF_WAIT,
     CD_STATE_SENDING_COLON,     // dvojbodka
     CD_STATE_SENDING_HEADER,
+    CD_STATE_SENDING_HEADER_CHECK_CRC,
     CD_STATE_SENDING_DATA
 } cd_state_sending_e;
 
@@ -54,14 +55,14 @@ static cd_state_sending_e cd_state_send = CD_STATE_SENDING_CLEAR_BUFF;
 static bool cd_receiving = false;
 static uint16_t cd_toPrepareOffset;
 static uint32_t cd_timeout = CD_TIMEOUT_DEF;
-static uint8_t cd_recBuff[300];
 static uint16_t cd_pointerRecBuff;
 static uint16_t cd_buffPointerToSendBuff = 0u;
 static uint8_t *cd_toSendPointer;
 static uint8_t cd_buffToSend1[] = ":02000002A0005C:0580000041686F6A31C8:00000001FF";
 static uint8_t cd_buffToSendNewNote[] = ":02000002A0005C";
+//static uint8_t C[300] = ":0580000041686F6A31C8"; // Ahoj1
 static uint8_t cd_buffToSendBuff[300] = ":0580000041686F6A31C8"; // Ahoj1
-//atic uint8_t cd_buffToSendBuff[300] = ":0580xx0041686F6A31C8"; // Ahoj1 xx offset
+//static uint8_t cd_buffToSendBuff[300] = ":0580xx0041686F6A31C8"; // Ahoj1 xx offset
 //static uint8_t cd_buffToSendAhoj[] = "12345678901234567890";
 static uint8_t cd_buffToSendAhoj[] = "1111111111222222222233333333334444444444555555555566666666667777777777888888888899999999990000000000AAAAAAAAAABBBBBBBBBBCCCCCCCCCCDDDDDDDDDDEEEEEEEEEEFFFFFFFFFF1111111111222222222233333333334444444444555555555566666666667777777777888888888899999999990000000000aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeffffffffff0000000000111111111122222222223333333333444444444455555555556666";
 //1111111111222222222233333333334444444444555555555566666666667777777777888888888899999999990000000000AAAAAAAAAABBBBBBBBBBCCCCCCCCCCDDDDDDDDDDEEEEEEEEEEFFFFFFFFFF1111111111222222222233333333334444444444555555555566666666667777777777888888888899999999990000000000aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeffffffffff0000000000111111111122222222223333333333444444444455555555556666
@@ -70,7 +71,7 @@ static uint8_t cd_buffToSendSave[] = ":00000001FF";
 static uint8_t cd_buffToSendEndCom[] = ":000000FF01";
 static uint8_t cd_countNotAns = 0u;
 
-void CD_task_send(void);
+cd_state_e CD_task_send(void);
 bool CD_task_receive(void);
 bool bWaitForCharacter(uint8_t ch);
 bool bIsReceivedCharacter(uint8_t ch);
@@ -82,13 +83,19 @@ void CD_changeToCdFormat(uint8_t *buff, uint8_t ch);
 void CD_buffToSendClear(void);
 void CD_buffToSendAdd(uint8_t ch);
 void CD_buffToSendAddCdFormat(uint8_t ch);
-uint8_t CD_buffToSendCRC(void);
-uint8_t CD_buffToSendCRC(void);
+/**
+    @param  crcCheck true - Zahrnie sa do vypoctu naviac dva posledne byty ktore su CRC prijimaneho paketu.
+                            Navratova hodnota je pri spravnom CRC nulova 0.
+                     false -Navratova hodnota je CRC ktora je aktualne v buffery
+*/
+uint8_t CD_buffToSendCRC(bool crcCheck);
 uint8_t CD_buffToValue(uint8_t chHi, uint8_t chLo);
 
 bool cd_test = false;
 
 cd_state_e CD_task(void) {
+    cd_state_e ret;
+    ret = cd_state;
     if(cd_test != false) {    
         if(TIM_delayIsTimerDown(DELAY_TIMER_TEST) == true) {
             HDIO_testPinOff();
@@ -101,7 +108,7 @@ cd_state_e CD_task(void) {
     } else if(cd_state == CD_STATE_RECEIVING) {
         (void) CD_task_receive();
     } else if(cd_state == CD_STATE_SENDING) {
-        CD_task_send();
+        ret = CD_task_send();
     } else if(cd_state == CD_STATE_ERROR) {
         cd_state = CD_STATE_SLEEP;
         cd_state_send = CD_STATE_SENDING_CLEAR_BUFF;
@@ -120,10 +127,12 @@ cd_state_e CD_task(void) {
         TIM_delaySetTimer(DELAY_TIMER_TEST, 3u);
         //cd_test = true;
     }
-    return cd_state;
+    return ret;
 }        
 
-void CD_task_send(void) {
+cd_state_e CD_task_send(void) {
+    cd_state_e ret;
+    ret = CD_STATE_SENDING;
     if(cd_state_send == CD_STATE_SENDING_SLEEP) {
         
     } else if(cd_state_send == CD_STATE_SENDING_CLEAR_BUFF) {
@@ -148,17 +157,28 @@ void CD_task_send(void) {
         cd_pointerRecBuff = 0u;
         cd_state_send = CD_STATE_SENDING_HEADER;
     } else if(cd_state_send == CD_STATE_SENDING_HEADER) {
+        if(TIM_delayIsTimerDown(DELAY_TIMER_CASIO_DIAR) == true) {
+            cd_state = CD_STATE_ERROR;
+        }
         if(cd_pointerRecBuff < CD_HEADER_SIZE) {
             if(true == SPu1_isNewData()) {
-                cd_recBuff[cd_pointerRecBuff++] = SPu1_getData();
+                cd_buffToSendBuff[cd_pointerRecBuff++] = SPu1_getData();
             }
         } else {
+            cd_state_send = CD_STATE_SENDING_HEADER_CHECK_CRC;
+        }
+    } else if(cd_state_send == CD_STATE_SENDING_HEADER_CHECK_CRC) {
+        if(0u == CD_buffToSendCRC(true)) {
             cd_state_send = CD_STATE_SENDING_DATA;
+            ret = CD_STATE_SENDED_NOTE;
+        } else {
+            cd_state = CD_STATE_ERROR;
         }
     } else if(cd_state_send == CD_STATE_SENDING_DATA) {
         cd_state_send = CD_STATE_SENDING_SLEEP;
         cd_state = CD_STATE_ERROR;
     }
+    return ret;
 }
 
 bool CD_task_receive(void) {
@@ -307,21 +327,27 @@ uint8_t CD_sendPrepareNote(uint8_t *buffText, uint16_t offset) {
         CD_buffToSendAddCdFormat(buffText[i++]);
         j--;
     }
-    CD_buffToSendAddCdFormat(CD_buffToSendCRC());
+    CD_buffToSendAddCdFormat(CD_buffToSendCRC(false));
     CD_buffToSendAdd('\0');
     return size;
 }
 
 // cd_buffToSendBuff[50] = ":0580000041686F6A31C8"; // Ahoj1
 //static uint8_t cd_buffToSendAhoj[] = "Ahoj1";
-uint8_t CD_buffToSendCRC(void) {
+uint8_t CD_buffToSendCRC(bool crcCheck) {
     uint8_t ch1, ch2, crc;
     uint16_t i, count;
     i = 1u;
     ch1 = cd_buffToSendBuff[i++];
     ch2 = cd_buffToSendBuff[i++];
-    crc = CD_buffToValue(ch1, ch2);
-    for(count = (3u + crc); count != 0; count--) {
+    crc = CD_buffToValue(ch1, ch2); // crc teraz obsahuje pocet bytov v sprave bez troch bytov v hlavidke
+    if(true == crcCheck) {
+        count = 1u;   // aby sa zaratal aj posledny CRC byte a vysledok bol 0 ak CRC sedi
+    } else {
+        count = 0u;
+    }
+    // +3 lebo 3 byty ktore su v hlavidke tu nie su zahrnute
+    for(count += (3u + crc); count != 0; count--) {
         ch1 = cd_buffToSendBuff[i++];
         ch2 = cd_buffToSendBuff[i++];
         crc = (uint8_t)(0xFFu & (crc + CD_buffToValue(ch1, ch2)));
@@ -391,7 +417,7 @@ uint8_t CD_receive(void) {
     cd_state = CD_STATE_SENDING;
     cd_state_send = CD_STATE_SENDING_CLEAR_BUFF;
     cd_pointerRecBuff = 0u;
-    return cd_recBuff[0];
+    return cd_buffToSendBuff[0];
 }
 
 void CD_sendToDiarConst(uint8_t *buff) {

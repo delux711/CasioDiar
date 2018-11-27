@@ -98,6 +98,7 @@ int main(void) {
                 led1_off();
                 led2_off();
                 break;
+            case CD_STATE_SENDED_NOTE:  LCD_GLASS_DisplayString((uint8_t*) "New note received"); break;
             default: break;
         }
         
