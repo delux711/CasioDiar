@@ -82,45 +82,15 @@
         <Book>
           <Number>0</Number>
           <Title>User Manual (STM32L476G-EVAL)</Title>
-          <Path>M:\Keil\MDK_ARM_5.22\ARM\PACK\Keil\STM32L4xx_DFP\1.3.0\Boards\ST\STM32L476G-EVAL\Documentation\DM00155732.pdf</Path>
+          <Path>c:\Programs\Keil\MDK_ARM_5.25\ARM\PACK\Keil\STM32L4xx_DFP\2.0.0\MDK\Boards\ST\STM32L476G-EVAL\Documentation\DM00155732.pdf</Path>
         </Book>
         <Book>
           <Number>1</Number>
           <Title>Schematics (STM32L476G-EVAL)</Title>
-          <Path>M:\Keil\MDK_ARM_5.22\ARM\PACK\Keil\STM32L4xx_DFP\1.3.0\Boards\ST\STM32L476G-EVAL\Documentation\MB1144B.pdf</Path>
+          <Path>c:\Programs\Keil\MDK_ARM_5.25\ARM\PACK\Keil\STM32L4xx_DFP\2.0.0\MDK\Boards\ST\STM32L476G-EVAL\Documentation\MB1144B.pdf</Path>
         </Book>
         <Book>
           <Number>2</Number>
-          <Title>User Manual (NUCLEO-L476RG)</Title>
-          <Path>M:\Keil\MDK_ARM_5.22\ARM\PACK\Keil\STM32NUCLEO_BSP\1.6.0\Documents\DM00105823.pdf</Path>
-        </Book>
-        <Book>
-          <Number>3</Number>
-          <Title>Overview (NUCLEO-L476RG)</Title>
-          <Path>M:\Keil\MDK_ARM_5.22\ARM\PACK\Keil\STM32NUCLEO_BSP\1.6.0\Documents\DM00105918.pdf</Path>
-        </Book>
-        <Book>
-          <Number>4</Number>
-          <Title>Getting started (NUCLEO-L476RG)</Title>
-          <Path>M:\Keil\MDK_ARM_5.22\ARM\PACK\Keil\STM32NUCLEO_BSP\1.6.0\Documents\DM00105928.pdf</Path>
-        </Book>
-        <Book>
-          <Number>5</Number>
-          <Title>Schematics (NUCLEO-L476RG)</Title>
-          <Path>M:\Keil\MDK_ARM_5.22\ARM\PACK\Keil\STM32NUCLEO_BSP\1.6.0\Documents\MB1136.pdf</Path>
-        </Book>
-        <Book>
-          <Number>6</Number>
-          <Title>Quick Start Guide (NUCLEO-L476RG)</Title>
-          <Path>M:\Keil\MDK_ARM_5.22\ARM\PACK\Keil\STM32NUCLEO_BSP\1.6.0\Documents\STM32L476RG-NUCLEO_QSG.pdf</Path>
-        </Book>
-        <Book>
-          <Number>7</Number>
-          <Title>STM32 Nucleo board (NUCLEO-L476RG)</Title>
-          <Path>http://www.st.com/web/catalog/tools/FM116/SC959/SS1532/LN1847/PF261636</Path>
-        </Book>
-        <Book>
-          <Number>8</Number>
           <Title>Web Page (STM32L476G-EVAL)</Title>
           <Path>http://www.st.com/web/en/catalog/tools/PF261634</Path>
         </Book>
@@ -147,8 +117,7 @@
         <tRSysVw>1</tRSysVw>
         <sRunDeb>0</sRunDeb>
         <sLrtime>0</sLrtime>
-        <bEvRecOn>1</bEvRecOn>
-        <nTsel>5</nTsel>
+        <nTsel>16</nTsel>
         <sDll></sDll>
         <sDllPa></sDllPa>
         <sDlgDll></sDlgDll>
@@ -197,34 +166,18 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
-          <LineNumber>66</LineNumber>
+          <LineNumber>147</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134225838</Address>
+          <Address>134220956</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>.\Src\main.c</Filename>
+          <Filename>.\Src\casioDiar.c</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\CasioDiar\Src/main.c\66</Expression>
-        </Bp>
-        <Bp>
-          <Number>1</Number>
-          <Type>0</Type>
-          <LineNumber>389</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>134221430</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>1</BreakIfRCount>
-          <Filename>.\Src\lcd.c</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression>\\CasioDiar\Src/lcd.c\389</Expression>
+          <Expression>\\CasioDiar\Src/casioDiar.c\147</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>
@@ -289,8 +242,6 @@
       <Lin2Executable></Lin2Executable>
       <Lin2ConfigFile></Lin2ConfigFile>
       <bLin2Auto>0</bLin2Auto>
-      <bAutoGenD>0</bAutoGenD>
-      <bAuto2GenD>0</bAuto2GenD>
       <SystemViewers>
         <Entry>
           <Name>System Viewer\DBGMCU</Name>

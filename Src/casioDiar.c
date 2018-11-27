@@ -18,9 +18,12 @@ typedef enum _cd_waitChar_e {
 
 typedef enum _cd_state_send_e {
     CD_STATE_SENDING_SLEEP,
+    CD_STATE_SENDING_CLEAR_BUFF,
     CD_STATE_SENDING_CR,        // 0x0D
     CD_STATE_SENDING_LF,        // 0x0A
-    CD_STATE_SENDING_COLON    // dvojbodka
+    CD_STATE_SENDING_LF_WAIT,
+    CD_STATE_SENDING_COLON,     // dvojbodka
+    CD_STATE_SENDING_DATA
 } cd_state_sending_e;
 
 typedef enum _cd_state_receiving_e {
@@ -44,7 +47,7 @@ typedef enum _cd_state_receiving_e {
 
 static cd_state_e cd_state = CD_STATE_NOT_INIT;
 static cd_state_receiving_e cd_state_receive = CD_STATE_RECEIVING_CR;
-static cd_state_sending_e cd_state_send = CD_STATE_SENDING_CR;
+static cd_state_sending_e cd_state_send = CD_STATE_SENDING_CLEAR_BUFF;
 
 static bool cd_receiving = false;
 static uint16_t cd_toPrepareOffset;
@@ -98,12 +101,12 @@ cd_state_e CD_task(void) {
         CD_task_send();
     } else if(cd_state == CD_STATE_ERROR) {
         cd_state = CD_STATE_SLEEP;
-        cd_state_send = CD_STATE_SENDING_CR;
+        cd_state_send = CD_STATE_SENDING_CLEAR_BUFF;
         cd_state_receive = CD_STATE_RECEIVING_CR;
     } else if(cd_state == CD_STATE_NOT_INIT) {
         cd_state = CD_STATE_SLEEP;
         cd_state_receive = CD_STATE_RECEIVING_CR;
-        cd_state_send = CD_STATE_SENDING_CR;
+        cd_state_send = CD_STATE_SENDING_CLEAR_BUFF;
         
         SP_init();
         TIM_delayInit();
@@ -120,21 +123,29 @@ cd_state_e CD_task(void) {
 void CD_task_send(void) {
     if(cd_state_send == CD_STATE_SENDING_SLEEP) {
         
+    } else if(cd_state_send == CD_STATE_SENDING_CLEAR_BUFF) {
+        cd_state_send = CD_STATE_SENDING_CR;
+        (void)SPu1_getData();
     } else if(cd_state_send == CD_STATE_SENDING_CR) {
-        if(bWaitForCharacter(0x0Du) == true) {   // '\r'
+        if(bWaitForCharacter(0x0Du) == true) {   // 0x0D '\r'
             cd_state_send = CD_STATE_SENDING_LF;
         }
     } else if(cd_state_send == CD_STATE_SENDING_LF) {
-        if(bWaitForCharacter(0x0Au) == true) {   // '\n'
+        if(bWaitForCharacter(0x0Au) == true) {   // 0x0A '\n'
+            cd_state_send = CD_STATE_SENDING_LF_WAIT;
+            TIM_delaySetTimer(DELAY_TIMER_CASIO_DIAR, 10u);
+        }
+    } else if(cd_state_send == CD_STATE_SENDING_LF_WAIT) {
+        if(TIM_delayIsTimerDown(DELAY_TIMER_CASIO_DIAR) == true) {
             cd_state_send = CD_STATE_SENDING_COLON;
-        } else {
-            cd_state = CD_STATE_ERROR;
         }
     } else if(cd_state_send == CD_STATE_SENDING_COLON) {
-        if(bWaitForCharacter('\n') == true) {
-            cd_state_send = CD_STATE_SENDING_SLEEP;
-            cd_state = CD_STATE_ERROR;
-        }
+        SPu1_sendChar(0x11u);
+        TIM_delaySetTimer(DELAY_TIMER_CASIO_DIAR, 150u);
+        cd_state_send = CD_STATE_SENDING_DATA;
+    } else if(cd_state_send == CD_STATE_SENDING_DATA) {
+        cd_state_send = CD_STATE_SENDING_SLEEP;
+        cd_state = CD_STATE_ERROR;
     }
 }
 
@@ -366,7 +377,7 @@ void CD_sendBuff(uint8_t *buff, cd_state_receiving_e newState, uint16_t setTim) 
 
 uint8_t CD_receive(void) {
     cd_state = CD_STATE_SENDING;
-    cd_state_send = CD_STATE_SENDING_CR;
+    cd_state_send = CD_STATE_SENDING_CLEAR_BUFF;
     return cd_buffer[0];
 }
 
@@ -388,7 +399,7 @@ void CD_CommandTimer(cd_state_receiving_e finalState, cd_state_receiving_e waitS
     if(TIM_delayIsTimerDown(DELAY_TL) == true) {
         if(cd_state_receive == waitState) {
             cd_countNotAns = 0u;
-            TIM_delaySetTimer(DELAY_TL, 500);
+            TIM_delaySetTimer(DELAY_TL, 500u);
             cd_state_receive = finalState;
             cd_state = CD_STATE_RECEIVING;
         }
@@ -398,14 +409,14 @@ void CD_CommandTimer(cd_state_receiving_e finalState, cd_state_receiving_e waitS
 bool bWaitForCharacter(uint8_t ch) {
     bool bReturn;
     bReturn = false;
-    if(cd_timeout == 0) {
+    if(cd_timeout == 0u) {
         cd_timeout = CD_TIMEOUT_DEF;
         cd_state = CD_STATE_ERROR;
     } else {
         cd_timeout--;
-        if(SP_isNewData() == true) {
+        if(SPu1_isNewData() == true) {
             cd_timeout = CD_TIMEOUT_DEF;
-            if(SP_getData() == ch) {
+            if(SPu1_getData() == ch) {
                 bReturn = true;
             } else {
                 cd_state = CD_STATE_ERROR;
