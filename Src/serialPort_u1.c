@@ -11,6 +11,7 @@ static uint8_t u1_pWrite;
 static uint8_t u1_pRead;
 static uint8_t u1_ucReadData;
 static bool u1_bNewData = false;
+static bool u1_bPause = false;
 
 extern uint8_t SPu1_sendBuff(uint8_t *buff, uint8_t length) {
     uint8_t i;
@@ -38,7 +39,9 @@ uint8_t SPu1_sendChar(uint8_t ch) {
     //TM_USART_Putc(USART1, ch);
     //while(!u1_n());
     u1_SPbuff[pPlus()] = ch;
-   USART1->CR1 |= USART_CR1_TXEIE;
+    if(u1_bPause == false) {
+        USART1->CR1 |= USART_CR1_TXEIE;
+    }
 
     /* If everything is OK, you have to return character written */
     //GPIOB->ODR &= ~(1u << GPIO_ODR_OD6_Pos);
@@ -65,6 +68,16 @@ void USART1_IRQHandler(void) {
    } else {
       USART1->CR1 &= ~USART_CR1_TXEIE;
    }
+}
+
+void SPu1_pauseOn(void) {
+    USART1->CR1 &= ~USART_CR1_TXEIE;
+    u1_bPause = true;
+}
+
+void SPu1_pauseOff(void) {
+    u1_bPause = false;
+    USART1->CR1 |= USART_CR1_TXEIE;
 }
 
 static bool u1_pWriteCheck(void) {

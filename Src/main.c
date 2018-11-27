@@ -63,15 +63,20 @@ int main(void) {
 	LCD_GLASS_DisplayString((uint8_t*) buff);
 	while(1) {
         myRtcLcd();
-        CD_task();
+        if(CD_task() == true) {
+            run_in_ram();
+        } else {
+            led1_off();
+        }
         TIM_handleTask();
 		if(tl_getTlSample().hore) {
 			//led1_on();
-			run_in_ram();
 			foo++;
 			CD_sendToDiarConst(0u);
+            //run_in_ram();
+            
 		} else {
-			led1_off();
+			//led1_off();
 		}
         if(tl_getTlSample().lavo) {
             myRtcGetTime((uint8_t *)buff);

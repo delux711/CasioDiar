@@ -42,6 +42,7 @@ typedef enum _cd_state_receiving_e {
     CD_STATE_RECEIVING_NEW_NOTE,
     CD_STATE_RECEIVING_NEW_NOTE_WAIT,
     CD_STATE_RECEIVING_SEND_DATA,
+    CD_STATE_RECEIVING_SEND_DATA_WAIT,
     CD_STATE_RECEIVING_SAVE,
     CD_STATE_RECEIVING_SAVE_WAIT,
     CD_STATE_RECEIVING_WAIT_TO_END,
@@ -52,26 +53,31 @@ static cd_state_e cd_state = CD_STATE_NOT_INIT;
 static cd_state_receiving_e cd_state_receive = CD_STATE_RECEIVING_CR;
 static cd_state_sending_e cd_state_send = CD_STATE_SENDING_CR;
 
+static bool cd_receiving = false;
+static uint16_t cd_toPrepareOffset;
 static uint32_t cd_timeout = CD_TIMEOUT_DEF;
 static uint8_t cd_buffer[300];
-static uint8_t cd_buffPointer = 0u;
+static uint16_t cd_buffPointer = 0u;
 static uint8_t *cd_toSendPointer;
 static uint8_t cd_buffToSend1[] = ":02000002A0005C:0580000041686F6A31C8:00000001FF";
 static uint8_t cd_buffToSendNewNote[] = ":02000002A0005C";
 static uint8_t cd_buffToSendBuff[300] = ":0580000041686F6A31C8"; // Ahoj1
 //atic uint8_t cd_buffToSendBuff[300] = ":0580xx0041686F6A31C8"; // Ahoj1 xx offset
-static uint8_t cd_buffToSendAhoj[] = "12345678901234567890";
+//static uint8_t cd_buffToSendAhoj[] = "12345678901234567890";
+static uint8_t cd_buffToSendAhoj[] = "1111111111222222222233333333334444444444555555555566666666667777777777888888888899999999990000000000AAAAAAAAAABBBBBBBBBBCCCCCCCCCCDDDDDDDDDDEEEEEEEEEEFFFFFFFFFF1111111111222222222233333333334444444444555555555566666666667777777777888888888899999999990000000000aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeffffffffff0000000000111111111122222222223333333333444444444455555555556666";
+//1111111111222222222233333333334444444444555555555566666666667777777777888888888899999999990000000000AAAAAAAAAABBBBBBBBBBCCCCCCCCCCDDDDDDDDDDEEEEEEEEEEFFFFFFFFFF1111111111222222222233333333334444444444555555555566666666667777777777888888888899999999990000000000aaaaaaaaaabbbbbbbbbbccccccccccddddddddddeeeeeeeeeeffffffffff0000000000111111111122222222223333333333444444444455555555556666
+
 static uint8_t cd_buffToSendSave[] = ":00000001FF";
 static uint8_t cd_buffToSendEndCom[] = ":000000FF01";
 static uint8_t cd_countNotAns = 0u;
 
 void CD_task_send(void);
-void CD_task_receive(void);
+bool CD_task_receive(void);
 bool bWaitForCharacter(uint8_t ch);
 bool bIsReceivedCharacter(uint8_t ch);
 void CD_sendBuff(uint8_t *buff, cd_state_receiving_e newState, uint16_t setTim);
 void CD_CommandTimer(cd_state_receiving_e finalState, cd_state_receiving_e waitState);
-void CD_sendPrepareNote(uint8_t *buffText);
+uint8_t CD_sendPrepareNote(uint8_t *buffText, uint16_t offset);
 void CD_changeToCdFormat(uint8_t *buff, uint8_t ch);
 
 void CD_buffToSendClear(void);
@@ -83,7 +89,8 @@ uint8_t CD_buffToValue(uint8_t chHi, uint8_t chLo);
 
 bool cd_test = false;
 
-void CD_task(void) {
+bool CD_task(void) {
+    bool temp = false;
     if(cd_test != false) {    
         if(TIM_delayIsTimerDown(DELAY_TIMER_TEST) == true) {
             HDIO_testPinOff();
@@ -94,7 +101,7 @@ void CD_task(void) {
     if(cd_state == CD_STATE_SLEEP) {
 
     } else if(cd_state == CD_STATE_RECEIVING) {
-        CD_task_receive();
+        temp = CD_task_receive();
     } else if(cd_state == CD_STATE_SENDING) {
         CD_task_send();
     }else if(cd_state == CD_STATE_NOT_INIT) {
@@ -110,6 +117,7 @@ void CD_task(void) {
         TIM_delaySetTimer(DELAY_TIMER_TEST, 3u);
         //cd_test = true;
     }
+    return temp;
 }        
 
 void CD_task_send(void) {
@@ -131,7 +139,9 @@ void CD_task_send(void) {
     }
 }
 
-void CD_task_receive(void) {
+bool CD_task_receive(void) {
+    uint8_t size;
+    cd_receiving = true;
     switch(cd_state_receive) {
         case CD_STATE_RECEIVING_SLEEP: break;
         case CD_STATE_RECEIVING_CR:
@@ -164,7 +174,6 @@ void CD_task_receive(void) {
                 cd_state_receive = CD_STATE_RECEIVING_CR;
             } else {
                 if(bIsReceivedCharacter(0x11u) == true) {
-                    //cd_state_receive = CD_STATE_RECEIVING_DATA1_SEND;  // next state
                     cd_state_receive = CD_STATE_RECEIVING_NEW_NOTE;
                 }
             }
@@ -173,7 +182,6 @@ void CD_task_receive(void) {
                 CD_sendBuff(cd_buffToSend1, CD_STATE_RECEIVING_DATA_WAIT, 400u); break;
         case CD_STATE_RECEIVING_DATA_WAIT:
                 if(bIsReceivedCharacter(0x23u) == true) {
-                    //cd_state_receive = CD_STATE_RECEIVING_END_COMMUNICATION;
                     cd_state_receive = CD_STATE_RECEIVING_SLEEP;
                 }
                 if(TIM_delayIsTimerDown(DELAY_TIMER_CASIO_DIAR) == true) {
@@ -182,31 +190,59 @@ void CD_task_receive(void) {
                 break;
         case CD_STATE_RECEIVING_END_COMMUNICATION:
                 CD_sendBuff(cd_buffToSendEndCom, CD_STATE_RECEIVING_SLEEP, 0u);
-                //cd_state_receive = CD_STATE_RECEIVING_SLEEP;
                 cd_state = CD_STATE_SLEEP;
                 break;
         case CD_STATE_RECEIVING_NEW_NOTE:
                 CD_sendBuff(cd_buffToSendNewNote, CD_STATE_RECEIVING_NEW_NOTE_WAIT, 100u); break;
         case CD_STATE_RECEIVING_NEW_NOTE_WAIT:
                 if(bIsReceivedCharacter(0x23u) == true) {
+                    cd_toPrepareOffset = 0u;
                     cd_state_receive = CD_STATE_RECEIVING_SEND_DATA;
                 } else if(TIM_delayIsTimerDown(DELAY_TIMER_CASIO_DIAR) == true) {
                     cd_state_receive = CD_STATE_RECEIVING_END_COMMUNICATION;
                 }
                 break;
         case CD_STATE_RECEIVING_SEND_DATA:
-                CD_buffToSendClear();
-                CD_sendPrepareNote(cd_toSendPointer);
-                CD_sendBuff(cd_buffToSendBuff, CD_STATE_RECEIVING_SAVE, 0u); break;
+                size = CD_sendPrepareNote(cd_toSendPointer, cd_toPrepareOffset);
+                if(size < 0x80u) {
+                    size = 0u;
+                    CD_sendBuff(cd_buffToSendBuff, CD_STATE_RECEIVING_SAVE, 0u);
+                } else {
+                    cd_toPrepareOffset += size;
+                    CD_sendBuff(cd_buffToSendBuff, CD_STATE_RECEIVING_SEND_DATA_WAIT, 50u);
+                }
+                break;
+        case CD_STATE_RECEIVING_SEND_DATA_WAIT:
+                if(TIM_delayIsTimerDown(DELAY_TIMER_CASIO_DIAR) == true) {
+                    cd_state_receive = CD_STATE_RECEIVING_SEND_DATA;
+                }
+                break;
         case CD_STATE_RECEIVING_SAVE:
-                CD_sendBuff(cd_buffToSendSave, CD_STATE_RECEIVING_SAVE_WAIT, 400u); break;
+                CD_sendBuff(cd_buffToSendSave, CD_STATE_RECEIVING_SAVE_WAIT, 1000u); break;
         case CD_STATE_RECEIVING_SAVE_WAIT:
+                cd_receiving = false;
+                if(SPu1_isNewData() == true) {
+                    switch(SPu1_getData()) {
+                        case 0x23u:
+                            cd_state_receive = CD_STATE_RECEIVING_WAIT_TO_END;
+                            TIM_delaySetTimer(DELAY_TIMER_CASIO_DIAR, 5000u);
+                            break;
+                        case 0x21u: // memory full
+                            cd_state_receive = CD_STATE_RECEIVING_END_COMMUNICATION;
+                            break;
+                        default:
+                            if(TIM_delayIsTimerDown(DELAY_TIMER_CASIO_DIAR) == true) {
+                                cd_state_receive = CD_STATE_RECEIVING_END_COMMUNICATION;
+                            }
+                            break;
+                    }
+                }/*
                 if(bIsReceivedCharacter(0x23u) == true) {
                     cd_state_receive = CD_STATE_RECEIVING_WAIT_TO_END;
                     TIM_delaySetTimer(DELAY_TIMER_CASIO_DIAR, 5000u);
                 } else if(TIM_delayIsTimerDown(DELAY_TIMER_CASIO_DIAR) == true) {
                     cd_state_receive = CD_STATE_RECEIVING_END_COMMUNICATION;
-                }
+                }*/
                 break;
         case CD_STATE_RECEIVING_WAIT_TO_END:
                 if(TIM_delayIsTimerDown(DELAY_TIMER_CASIO_DIAR) == true) {
@@ -215,39 +251,51 @@ void CD_task_receive(void) {
                 break;
         default: break;
     }
+    return cd_receiving;
 }
 
-void CD_sendPrepareNote(uint8_t *buffText) {
-    uint8_t i, ch;
+uint8_t CD_sendPrepareNote(uint8_t *buffText, uint16_t offset) {
+    uint16_t i;
+    uint8_t j, size;
+    CD_buffToSendClear();
     // START character :
     CD_buffToSendAdd(':');
     // couting size to send
-    i = 0u;
-    while(buffText[i] != '\0') {
-        i++;
+    size = 0u;
+    while((buffText[size + offset] != '\0') && (size < 0x80u)) {    // 0x80 = 128 bytov dokazem naraz poslat
+        size++;
     }
-    CD_buffToSendAddCdFormat(i);
+    CD_buffToSendAddCdFormat(size);
     CD_buffToSendAdd('8');
-    CD_buffToSendAdd('0');
-    CD_buffToSendAdd('0');	// offset in hex npr 0
-    CD_buffToSendAdd('0');	// offset            F - 0F=15 bytov od zaciatku
-    CD_buffToSendAdd('0');
-    CD_buffToSendAdd('0');
-    i = 0;
-    ch = buffText[i++];
-    while(ch != '\0') {
-        CD_buffToSendAddCdFormat(ch);
-        ch = buffText[i++];
+    if(offset < 0x100u) {
+        CD_buffToSendAdd('0');
+    } else {
+        CD_buffToSendAdd('1');
     }
-    //CD_buffToSendAddCdFormat((uint8_t)(0x100u - cd_buffCRC));
+    //CD_buffToSendAdd('0');    // offset in hex npr 0
+    //CD_buffToSendAdd('0');    // offset            F - 0F=15 bytov od zaciatku
+    CD_buffToSendAddCdFormat(offset);
+    CD_buffToSendAdd('0');
+    CD_buffToSendAdd('0');
+    i = offset;
+    j = size;
+    if(size > 0x80u) {
+        j = 0x80u;
+    }
+    while(j != 0u) {
+        CD_buffToSendAddCdFormat(buffText[i++]);
+        j--;
+    }
     CD_buffToSendAddCdFormat(CD_buffToSendCRC());
     CD_buffToSendAdd('\0');
+    return size;
 }
 
 // cd_buffToSendBuff[50] = ":0580000041686F6A31C8"; // Ahoj1
 //static uint8_t cd_buffToSendAhoj[] = "Ahoj1";
 uint8_t CD_buffToSendCRC(void) {
-    uint8_t i, ch1, ch2, crc, count;
+    uint8_t ch1, ch2, crc;
+    uint16_t i, count;
     i = 1u;
     ch1 = cd_buffToSendBuff[i++];
     ch2 = cd_buffToSendBuff[i++];
@@ -281,7 +329,7 @@ void CD_buffToSendClear(void) {
 }
 
 void CD_buffToSendAdd(uint8_t ch) {
-    if(cd_buffPointer < sizeof(cd_buffToSendBuff)) {
+    if(cd_buffPointer < (uint16_t) sizeof(cd_buffToSendBuff)) {
         cd_buffToSendBuff[cd_buffPointer++] = ch;
     }
 }
@@ -301,10 +349,16 @@ void CD_buffToSendAddCdFormat(uint8_t ch) {
 }
 
 void CD_sendBuff(uint8_t *buff, cd_state_receiving_e newState, uint16_t setTim) {
-    uint8_t i, ch;
+    uint8_t ch;
+    uint16_t i;
     i = 0u;
     ch = buff[0u];
     while(ch != '\0') {
+        if(bIsReceivedCharacter(0x13u) == true) {   // May send 0x13 (ASCII 19/Ctrl-S/XOFF) to request a temporary halt (too much data too fast for it)
+            SPu1_pauseOn();
+            while(bIsReceivedCharacter(0x11u) == false);
+            SPu1_pauseOff();
+        }
         ch = buff[i++];
         SPu1_sendChar(ch);
     }

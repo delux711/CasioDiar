@@ -6,6 +6,8 @@
 
 extern void SPu1_init(void);
 extern bool SPu1_isNewData(void);
+extern void SPu1_pauseOn(void);
+extern void SPu1_pauseOff(void);
 extern uint8_t SPu1_getData(void);
 extern uint8_t SPu1_sendChar(uint8_t ch);
 extern uint8_t SPu1_sendBuff(uint8_t *buff, uint8_t length);
