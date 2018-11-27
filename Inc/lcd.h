@@ -42,10 +42,12 @@
 #include "stm32l4xx.h"                  // Device header
 
 /* USER CODE BEGIN Includes */
-
+#include <stdbool.h>
 /* USER CODE END Includes */
 
 /* USER CODE BEGIN Private defines */
+
+#define MX_LCD_MAX_BUFFER   (50u)
 
 /**
   * @brief LCD Glass digit position
@@ -340,15 +342,6 @@ typedef enum
 /* code for ')' character */
 #define C_CLOSEPARMAP         ((uint16_t) 0x0011)
 
-/* code for 'd' character */
-#define C_DMAP                ((uint16_t) 0xf300)
-
-/* code for 'm' character */
-#define C_MMAP                ((uint16_t) 0xb210)
-
-/* code for 'n' character */
-#define C_NMAP                ((uint16_t) 0x2210)
-
 /* code for 'µ' character */
 #define C_UMAP                ((uint16_t) 0x6084)
 
@@ -370,11 +363,15 @@ typedef enum
 /* constant code for small o */
 #define C_PERCENT_2           ((uint16_t) 0xb300)
 
+/* constant code for ',' */
+#define C_COMMA               ((uint16_t) 0x0080)
+
 #define C_FULL                ((uint16_t) 0xffdd)
 
 /* USER CODE END Private defines */
 
 extern void MX_LCD_Init(void);
+extern bool MX_LCD_Task(void);
 
 /* USER CODE BEGIN Prototypes */
 

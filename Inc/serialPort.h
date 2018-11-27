@@ -6,6 +6,11 @@
 
 extern void SP_init(void);
 extern bool SP_isNewData(void);
+extern void SP_pauseOn(void);
+extern void SP_pauseOff(void);
 extern uint8_t SP_getData(void);
+extern uint8_t SP_sendChar(uint8_t ch);
+extern uint8_t SP_sendBuff(uint8_t *buff, uint8_t length);
+extern uint8_t SP_sendString(uint8_t *buff);
 
 #endif

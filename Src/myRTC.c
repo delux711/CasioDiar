@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include <stdbool.h>
-#include "lcd.h"
+//#include "lcd.h"
 #include "stm32l4xx.h"                  // Device header
 #include "myRTC.h"
 
@@ -54,43 +54,43 @@ void myRtcInit(void) {
    myRtcUpdate();
 }
 
-void myRtcLcd(void) {
-   uchar str[6];
-   uint8_t i, ch;
-   if(RTC->ISR & RTC_ISR_WUTF) {
-      RTC->ISR &= ~RTC_ISR_WUTF;
-		 myRtcGetTime(str);
-		 /*
-      str[0] = (uchar)(((RTC->TR & RTC_TR_HT)  >> RTC_TR_HT_Pos)  + '0');
-      str[1] = (uchar)(((RTC->TR & RTC_TR_HU)  >> RTC_TR_HU_Pos)  + '0');
-      str[2] = (uchar)(((RTC->TR & RTC_TR_MNT) >> RTC_TR_MNT_Pos) + '0');
-      str[3] = (uchar)(((RTC->TR & RTC_TR_MNU) >> RTC_TR_MNU_Pos) + '0');
-      str[4] = (uchar)(((RTC->TR & RTC_TR_ST)  >> RTC_TR_ST_Pos)  + '0');
-      str[5] = (uchar)(((RTC->TR & RTC_TR_SU)  >> RTC_TR_SU_Pos)  + '0');*/
-      i = 0;
-      do {
-        ch = str[i];
-        if(ch == '0')
-          str[i++] = ' ';
-        else break;
-      } while(i < 6);
-      PWR->CR1 |= PWR_CR1_DBP;
-      RTC->BKP0R = RTC->TR;
-      PWR->CR1 &= ~PWR_CR1_DBP;
-      LCD_GLASS_DisplayStringTime(str);
-   }
-   /*
-   if(rtcStr.hodDes.update == ON) {
-      LCD_GLASS_WriteChar(&rtcStr.hodDes.value, POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_1);
-      rtcStr.hodDes.update = OFF;
-   }
+// void myRtcLcd(void) {
+   // uchar str[6];
+   // uint8_t i, ch;
+   // if(RTC->ISR & RTC_ISR_WUTF) {
+      // RTC->ISR &= ~RTC_ISR_WUTF;
+		 // myRtcGetTime(str);
+		 // /*
+      // str[0] = (uchar)(((RTC->TR & RTC_TR_HT)  >> RTC_TR_HT_Pos)  + '0');
+      // str[1] = (uchar)(((RTC->TR & RTC_TR_HU)  >> RTC_TR_HU_Pos)  + '0');
+      // str[2] = (uchar)(((RTC->TR & RTC_TR_MNT) >> RTC_TR_MNT_Pos) + '0');
+      // str[3] = (uchar)(((RTC->TR & RTC_TR_MNU) >> RTC_TR_MNU_Pos) + '0');
+      // str[4] = (uchar)(((RTC->TR & RTC_TR_ST)  >> RTC_TR_ST_Pos)  + '0');
+      // str[5] = (uchar)(((RTC->TR & RTC_TR_SU)  >> RTC_TR_SU_Pos)  + '0');*/
+      // i = 0;
+      // do {
+        // ch = str[i];
+        // if(ch == '0')
+          // str[i++] = ' ';
+        // else break;
+      // } while(i < 6);
+      // PWR->CR1 |= PWR_CR1_DBP;  // write protection OFF for back up registers
+      // RTC->BKP0R = RTC->TR;     // save actual time to back up register
+      // PWR->CR1 &= ~PWR_CR1_DBP; // protection ON
+      // LCD_GLASS_DisplayStringTime(str);
+   // }
+   // /*
+   // if(rtcStr.hodDes.update == ON) {
+      // LCD_GLASS_WriteChar(&rtcStr.hodDes.value, POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_1);
+      // rtcStr.hodDes.update = OFF;
+   // }
 
-   if(rtcStr.sekJed.update == ON) {
-      LCD_GLASS_WriteChar(&rtcStr.sekJed.value, POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_6);
-      rtcStr.sekJed.update = OFF;
-   }*/
+   // if(rtcStr.sekJed.update == ON) {
+      // LCD_GLASS_WriteChar(&rtcStr.sekJed.value, POINT_OFF, DOUBLEPOINT_OFF, LCD_DIGIT_POSITION_6);
+      // rtcStr.sekJed.update = OFF;
+   // }*/
    
-}
+// }
 
 void myRtcGetTime(uint8_t *buff) {
 	buff[0] = (uint8_t)(((RTC->TR & RTC_TR_HT)  >> RTC_TR_HT_Pos)  + '0');
@@ -99,6 +99,21 @@ void myRtcGetTime(uint8_t *buff) {
 	buff[3] = (uint8_t)(((RTC->TR & RTC_TR_MNU) >> RTC_TR_MNU_Pos) + '0');
 	buff[4] = (uint8_t)(((RTC->TR & RTC_TR_ST)  >> RTC_TR_ST_Pos)  + '0');
 	buff[5] = (uint8_t)(((RTC->TR & RTC_TR_SU)  >> RTC_TR_SU_Pos)  + '0');
+}
+
+void myRtcSaveActualTime(void) {
+    PWR->CR1 |= PWR_CR1_DBP;  // write protection OFF for back up registers
+    RTC->BKP0R = RTC->TR;     // save actual time to back up register
+    PWR->CR1 &= ~PWR_CR1_DBP; // protection ON
+}
+
+bool myRtcIsNewTime(void) {
+    bool temp = false;
+    if(RTC->ISR & RTC_ISR_WUTF) {
+        RTC->ISR &= ~RTC_ISR_WUTF;
+        temp = true;
+    }
+    return temp;
 }
 
 void myRtcUpdate(void) {
