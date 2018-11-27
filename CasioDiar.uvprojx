@@ -474,6 +474,31 @@
           </Files>
         </Group>
         <Group>
+          <GroupName>hi2c</GroupName>
+          <Files>
+            <File>
+              <FileName>hi2c.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\hi2c\hi2c.h</FilePath>
+            </File>
+            <File>
+              <FileName>hi2c01.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\hi2c\hi2c01.c</FilePath>
+            </File>
+            <File>
+              <FileName>hi2c01xs.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\hi2c\hi2c01xs.c</FilePath>
+            </File>
+            <File>
+              <FileName>hi2c01xs.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\hi2c\hi2c01xs.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
           <GroupName>::CMSIS</GroupName>
         </Group>
         <Group>

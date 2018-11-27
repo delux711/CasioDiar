@@ -102,6 +102,8 @@ static uint8_t cd_buffToSendAhoj[] = "111111111122222222223333333333444444444455
 static uint8_t cd_buffToSendSave[] = ":00000001FF";
 static uint8_t cd_buffToSendEndCom[] = ":000000FF01";
 static uint8_t cd_countNotAns = 0u;
+static uint8_t *cd_buffUserData;
+static uint16_t cd_buffUserDataSize = 0u;
 
 cd_state_e CD_task_send(void);
 bool CD_task_receive(void);
@@ -124,6 +126,23 @@ uint8_t CD_buffToSendCRC(bool crcCheck);
 uint8_t CD_buffToValue(uint8_t chHi, uint8_t chLo);
 
 bool cd_test = false;
+uint8_t cd_bTestCount = 0u;
+uint8_t cd_bTest[1000u];
+
+void cd_bTestPut(uint8_t ch);
+void cd_bTestReset(void);
+void cd_bTestReset(void) {
+    uint16_t i;
+    for(i = 0u; i < 1000u; i++) {
+        cd_bTest[i] = 0u;
+    }
+}
+
+void cd_bTestPut(uint8_t ch) {
+    if(cd_bTestCount < 1000u) {
+        cd_bTest[cd_bTestCount++] = ch;
+    }
+}
 
 cd_state_e CD_task(void) {
     cd_state_e ret;
@@ -151,73 +170,79 @@ cd_state_e CD_task(void) {
         cd_state = CD_STATE_SLEEP;
         cd_state_send = CD_STATE_SENDING_CLEAR_BUFF;
         cd_state_receive = CD_STATE_RECEIVING_CR;
+        SPu1_pauseOff();
+        SPu1_sendChar('$');   // 0x36 - $ - "indicate error in current record"
         SPu1_clearReceivedData();
     } else if(cd_state == CD_STATE_NOT_INIT) {
-        cd_state = CD_STATE_SLEEP;
-        cd_state_receive = CD_STATE_RECEIVING_CR;
-        cd_state_send = CD_STATE_SENDING_CLEAR_BUFF;
-        
-        SP_init();
-        TIM_delayInit();
-        SPu1_init();
+        if(0u != cd_buffUserDataSize) {
+            cd_bTestReset();
+            cd_state = CD_STATE_SLEEP;
+            cd_state_receive = CD_STATE_RECEIVING_CR;
+            cd_state_send = CD_STATE_SENDING_CLEAR_BUFF;
+            
+            SP_init();
+            TIM_delayInit();
+            SPu1_init();
 
-        HDIO_testPinInit();
-        HDIO_testPinOff();
-        TIM_delaySetTimer(DELAY_TIMER_TEST, 3u);
-        //cd_test = true;
+            HDIO_testPinInit();
+            HDIO_testPinOff();
+            TIM_delaySetTimer(DELAY_TIMER_TEST, 3u);
+        }
     }
     return ret;
 }        
 
 cd_state_e CD_task_send(void) {
     uint8_t i, temp;
+    uint16_t size;
     cd_state_e ret;
     ret = CD_STATE_SENDING;
     switch(cd_state_send) {
-        case CD_STATE_SENDING_SLEEP: break;
+        case CD_STATE_SENDING_SLEEP: cd_bTestPut(1); break;
         case CD_STATE_SENDING_CLEAR_BUFF:
             cd_state_send = CD_STATE_SENDING_CR;
-            TIM_delaySetTimer(DELAY_TIMER_CASIO_DIAR, 150u);
-            break;
+            TIM_delaySetTimer(DELAY_TIMER_CASIO_ERROR, 150u);
+            cd_bTestPut(2); break;
         case CD_STATE_SENDING_CR:
-            if(bWaitForCharacter(0x0Du) == true) {   // 0x0D '\r'
+            if(bWaitForCharacter('\r') == true) {   // 0x0D '\r'
                 cd_state_send = CD_STATE_SENDING_LF;
             }
-            break;
+            cd_bTestPut(3); break;
         case CD_STATE_SENDING_LF:
-            if(bWaitForCharacter(0x0Au) == true) {   // 0x0A '\n'
+            if(bWaitForCharacter('\n') == true) {   // 0x0A '\n'
                 cd_state_send = CD_STATE_SENDING_LF_WAIT;
-                TIM_delaySetTimer(DELAY_TIMER_CASIO_DIAR, 10u);
+                TIM_delaySetTimer(DELAY_TIMER_CASIO_ERROR, 10u);
             }
-            break;
+            cd_bTestPut(4); break;
         case CD_STATE_SENDING_LF_WAIT:
-            if(TIM_delayIsTimerDown(DELAY_TIMER_CASIO_DIAR) == true) {
-                TIM_delaySetTimer(DELAY_TIMER_CASIO_DIAR, 150u);
+            if(TIM_delayIsTimerDown(DELAY_TIMER_CASIO_ERROR) == true) {
+                TIM_delaySetTimer(DELAY_TIMER_CASIO_ERROR, 150u);
                 cd_state_send = CD_STATE_SENDING_COLON;
             }
-            break;
+            cd_bTestPut(5); break;
         case CD_STATE_SENDING_COLON:
-            SPu1_sendChar(0x11u);
-            TIM_delaySetTimer(DELAY_TIMER_CASIO_DIAR, 150u);
+            SPu1_pauseOff();
+            SPu1_sendChar(0x11u);       // "Ready after receiving a CR-LF pair"
+            TIM_delaySetTimer(DELAY_TIMER_CASIO_ERROR, 150u);
             cd_pointerRecBuff = 0u;
             cd_state_send = CD_STATE_SENDING_PACKET_WAIT;
-            break;
+            cd_bTestPut(6); break;
         case CD_STATE_SENDING_PACKET_WAIT:
             if(true == SPu1_isNewData()) {
                 temp = SPu1_getData();
                 if(':' == temp) {
                     cd_startOfPacket = cd_pointerRecBuff;
                     cd_buffToSendBuff[cd_pointerRecBuff++] = temp;  // :llffoottddddcc (here is :)
-                    TIM_delaySetTimer(DELAY_TIMER_CASIO_DIAR, 150u);
+                    TIM_delaySetTimer(DELAY_TIMER_CASIO_ERROR, 150u);
                     cd_state_send = CD_STATE_SENDING_PACKET_QUANTITY;
                 }
             }
-            break;
+            cd_bTestPut(7); break;
         case CD_STATE_SENDING_PACKET_QUANTITY:
             if(cd_pointerRecBuff < 3u) {        // zero byte is ":", one and two are quantity of received bytes
                 if(true == SPu1_isNewData()) {
                     cd_buffToSendBuff[cd_pointerRecBuff++] = SPu1_getData(); // // :llffoottddddcc (here are ll)
-                    TIM_delaySetTimer(DELAY_TIMER_CASIO_DIAR, 150u);
+                    TIM_delaySetTimer(DELAY_TIMER_CASIO_ERROR, 150u);
                 }
             } else {
                 temp = cd_pointerRecBuff - 1u;
@@ -226,7 +251,7 @@ cd_state_e CD_task_send(void) {
                 cd_quantityForReceive += 11u;   // :llffoottddddcc ; quantity + another bytes from header received
                 cd_state_send =  CD_STATE_SENDING_PACKET;
             }
-            break;
+            cd_bTestPut(8); break;
         case CD_STATE_SENDING_PACKET:
             if(cd_pointerRecBuff < cd_quantityForReceive) {
                 if(true == SPu1_isNewData()) {
@@ -235,78 +260,87 @@ cd_state_e CD_task_send(void) {
             } else {
                 cd_state_send = CD_STATE_SENDING_PACKET_CHECK_CRC;
             }
-            break;
+            cd_bTestPut(9); break;
         case CD_STATE_SENDING_PACKET_CHECK_CRC:
             if(0u == CD_buffToSendCRC(true)) {
                 cd_pointerRecBuff -= (cd_quantityForReceive - 1u);
                 cd_state_send = CD_STATE_SENDING_PACKET_PROCESS;
+                SPu1_pauseOff();
+                SPu1_sendChar('#');   // 0x23u - # - "Received OK, continue"
             } else {
                 cd_state = CD_STATE_ERROR;
             }
-            break;
+            cd_bTestPut(10); break;
         case CD_STATE_SENDING_PACKET_PROCESS:
-            TIM_delaySetTimer(DELAY_TIMER_CASIO_DIAR, 150u);
+            TIM_delaySetTimer(DELAY_TIMER_CASIO_ERROR, 150u);
             cd_quantityForReceive >>= 1u;   // cd_quantityForReceive / 2
             for(i = 0u; i < cd_quantityForReceive; i++) {
                 temp = cd_buffToSendBuff[cd_pointerRecBuff++];
                 cd_buffToSendBuff[i] = CD_buffToValue(temp, cd_buffToSendBuff[cd_pointerRecBuff++]);
             }
             cd_state_send = CD_STATE_SENDING_PACKET_FILED_DATA;
-            break;
+            cd_bTestPut(11); break;
         case CD_STATE_SENDING_PACKET_FILED_DATA:
             switch(cd_buffToSendBuff[CD_BUFF_PACKET_FIELD_DATA] & 0xF0u) {   // 1 - CD_BUFF_PACKET_FIELD_DATA
-                case CD_PACKET_FIELD_DATA_TEXT: 
+                case CD_PACKET_FIELD_DATA_TEXT:     // 0x80u
                     cd_buffToSendBuff[cd_quantityForReceive - 1u] = '\0';
+                    for(size = 0u; size < (cd_quantityForReceive - 1u) ; size++) {
+                        if(size < cd_buffUserDataSize) {
+                            cd_buffUserData[size] = cd_buffToSendBuff[size+4u];
+                        }
+                    }
+                    cd_pointerRecBuff = 0u;
+                    cd_state_send = CD_STATE_SENDING_PACKET_WAIT;
                     ret = CD_STATE_SENDED_DATA;
-                    cd_state_send = CD_STATE_SENDING_SLEEP;
-                    cd_state = CD_STATE_SLEEP;
-                    break;
-                case CD_PACKET_FIELD_DATA_SHCEDULE:
-                case CD_PACKET_FIELD_DATA_CALENDAR:
-                case CD_PACKET_FIELD_DATA_TIME:
-                case CD_PACKET_FIELD_DATA_DATE:
-                case CD_PACKET_FIELD_DATA_TYPE: cd_state_send = CD_STATE_SENDING_PACKET_WHICH; break;
+                    cd_bTestPut(12); break;
+                case CD_PACKET_FIELD_DATA_SHCEDULE: // 0xC0u
+                case CD_PACKET_FIELD_DATA_CALENDAR: // 0xD0u
+                case CD_PACKET_FIELD_DATA_TIME:     // 0xE0u
+                case CD_PACKET_FIELD_DATA_DATE:     // 0xF0u
+                case CD_PACKET_FIELD_DATA_TYPE:     // 0x00u
+                    cd_state_send = CD_STATE_SENDING_PACKET_WHICH;
+                    cd_bTestPut(13); break;
                 default: cd_state = CD_STATE_ERROR; 
             }
-            break;
+            cd_bTestPut(14); break;
         case CD_STATE_SENDING_PACKET_WHICH:
             switch(cd_buffToSendBuff[CD_BUFF_PACKET_FIELD_TYPE]) {   // 3 - CD_BUFF_PACKET_FIELD_TYPE
                 case CD_PACKET_FIELD_TYPE_IDENTIFICATION:        // 2 - CD_PACKET_FIELD_TYPE_IDENTIFICATION
                     cd_state_send = CD_STATE_SENDING_FIELD_WHICH;
-                    break;
+                    cd_bTestPut(15); break;
                 case CD_PACKET_FIELD_TYPE_TERM_RECORD:           // 1 - CD_PACKET_FIELD_TYPE_TERM_RECORD
                 case CD_PACKET_FIELD_TYPE_TERM_TRANSMISION:      // 0xFFu - CD_PACKET_FIELD_TYPE_TERM_TRANSMISION
                 case CD_PACKET_FIELD_TYPE_DATA:                  // 0 - CD_PACKET_FIELD_TYPE_DATA
-                    break;
-                default: cd_state_send = CD_STATE_SENDING_DATA; break;
+                    cd_bTestPut(16); break;
+                default: cd_state_send = CD_STATE_SENDING_DATA; cd_bTestPut(17); break;
             }
-            break;
+            cd_bTestPut(18); break;
         case CD_STATE_SENDING_FIELD_WHICH:
             switch(cd_buffToSendBuff[CD_BUFF_PACKET_DATA]) { // 4 - CD_BUFF_PACKET_DATA
-                case CD_PACKET_IDENT_CALENDAR:  ret = CD_STATE_SENDED_CALENDAR;  break;
-                case CD_PACKET_IDENT_TELEPHONE: ret = CD_STATE_SENDED_TELEPHONE; break;
-                case CD_PACKET_IDENT_MEMO:      ret = CD_STATE_SENDED_NOTE;      break;
-                case CD_PACKET_IDENT_SCHEDULE:  ret = CD_STATE_SENDED_SCHEDULE;  break;
-                case CD_PACKET_IDENT_REMINDER:  ret = CD_STATE_SENDED_REMINDER;  break;
-                case CD_PACKET_IDENT_REMINDER2: ret = CD_STATE_SENDED_REMINDER2; break;
-                case CD_PACKET_IDENT_FREE_FILE: ret = CD_STATE_SENDED_FREE_FILE; break;
-                default: cd_state = CD_STATE_ERROR; break;
+                case CD_PACKET_IDENT_CALENDAR:  ret = CD_STATE_SENDED_CALENDAR;  cd_bTestPut(19); break; // 0x80u
+                case CD_PACKET_IDENT_TELEPHONE: ret = CD_STATE_SENDED_TELEPHONE; cd_bTestPut(20); break; // 0x90u
+                case CD_PACKET_IDENT_MEMO:      ret = CD_STATE_SENDED_NOTE;      cd_bTestPut(21); break; // 0xA0u
+                case CD_PACKET_IDENT_SCHEDULE:  ret = CD_STATE_SENDED_SCHEDULE;  cd_bTestPut(22); break; // 0xB0u
+                case CD_PACKET_IDENT_REMINDER:  ret = CD_STATE_SENDED_REMINDER;  cd_bTestPut(23); break; // 0x91u
+                case CD_PACKET_IDENT_REMINDER2: ret = CD_STATE_SENDED_REMINDER2; cd_bTestPut(24); break; // 0xA1u
+                case CD_PACKET_IDENT_FREE_FILE: ret = CD_STATE_SENDED_FREE_FILE; cd_bTestPut(25); break; // 0xB1u
+                default: cd_state = CD_STATE_ERROR; cd_bTestPut(26); break;
             }
             if(CD_STATE_ERROR != cd_state) {
                 cd_pointerRecBuff = 0u;
                 cd_state_send = CD_STATE_SENDING_PACKET_WAIT;
             }
-            break;
+            cd_bTestPut(27); break;
         case CD_STATE_SENDING_DATA:
             cd_state_send = CD_STATE_SENDING_SLEEP;
             cd_state = CD_STATE_ERROR;
-            break;
+            cd_bTestPut(28); break;
         default: 
             cd_state_send = CD_STATE_SENDING_SLEEP;
             cd_state = CD_STATE_ERROR;
-            break;
+            cd_bTestPut(29); break;
     }
-    if(TIM_delayIsTimerDown(DELAY_TIMER_CASIO_DIAR) == true) {
+    if(TIM_delayIsTimerDown(DELAY_TIMER_CASIO_ERROR) == true) {
         cd_state = CD_STATE_ERROR;
     }
     return ret;
@@ -323,14 +357,14 @@ bool CD_task_receive(void) {
                 SPu1_sendChar(0x0Du);    // 0x0D = \r
                 HDIO_testPinOff();
                 cd_state_receive = CD_STATE_RECEIVING_WAIT_CR;
-                TIM_delaySetTimer(DELAY_TIMER_CASIO_DIAR, 5u);
+                TIM_delaySetTimer(DELAY_TIMER_CASIO_ERROR, 5u);
             } else {
                 cd_countNotAns = 0u;
                 cd_state = CD_STATE_ERROR;
             }
             break;
         case CD_STATE_RECEIVING_WAIT_CR:
-            if(TIM_delayIsTimerDown(DELAY_TIMER_CASIO_DIAR) == true) {
+            if(TIM_delayIsTimerDown(DELAY_TIMER_CASIO_ERROR) == true) {
                 cd_state_receive = CD_STATE_RECEIVING_LF;
             }
             break;
@@ -338,10 +372,10 @@ bool CD_task_receive(void) {
             GPIOD->ODR &= (~GPIO_ODR_OD0_Msk); // pin OFF
             SPu1_sendChar(0x0Au);    // 0x0A = \n
             cd_state_receive = CD_STATE_RECEIVING_WAIT_FOR_0X11;
-            TIM_delaySetTimer(DELAY_TIMER_CASIO_DIAR, 50u);
+            TIM_delaySetTimer(DELAY_TIMER_CASIO_ERROR, 50u);
             break;
         case CD_STATE_RECEIVING_WAIT_FOR_0X11:
-            if(TIM_delayIsTimerDown(DELAY_TIMER_CASIO_DIAR) == true) {
+            if(TIM_delayIsTimerDown(DELAY_TIMER_CASIO_ERROR) == true) {
                 cd_countNotAns++;
                 cd_state_receive = CD_STATE_RECEIVING_CR;
             } else {
@@ -356,7 +390,7 @@ bool CD_task_receive(void) {
                 if(bIsReceivedCharacter(0x23u) == true) {
                     cd_state_receive = CD_STATE_RECEIVING_SLEEP;
                 }
-                if(TIM_delayIsTimerDown(DELAY_TIMER_CASIO_DIAR) == true) {
+                if(TIM_delayIsTimerDown(DELAY_TIMER_CASIO_ERROR) == true) {
                     cd_state_receive = CD_STATE_RECEIVING_SLEEP;
                 }
                 break;
@@ -370,7 +404,7 @@ bool CD_task_receive(void) {
                 if(bIsReceivedCharacter(0x23u) == true) {
                     cd_toPrepareOffset = 0u;
                     cd_state_receive = CD_STATE_RECEIVING_SEND_DATA;
-                } else if(TIM_delayIsTimerDown(DELAY_TIMER_CASIO_DIAR) == true) {
+                } else if(TIM_delayIsTimerDown(DELAY_TIMER_CASIO_ERROR) == true) {
                     cd_state_receive = CD_STATE_RECEIVING_END_COMMUNICATION;
                 }
                 break;
@@ -385,7 +419,7 @@ bool CD_task_receive(void) {
                 }
                 break;
         case CD_STATE_RECEIVING_SEND_DATA_WAIT:
-                if(TIM_delayIsTimerDown(DELAY_TIMER_CASIO_DIAR) == true) {
+                if(TIM_delayIsTimerDown(DELAY_TIMER_CASIO_ERROR) == true) {
                     cd_state_receive = CD_STATE_RECEIVING_SEND_DATA;
                 }
                 break;
@@ -397,13 +431,13 @@ bool CD_task_receive(void) {
                     switch(SPu1_getData()) {
                         case 0x23u:
                             cd_state_receive = CD_STATE_RECEIVING_WAIT_TO_END;
-                            TIM_delaySetTimer(DELAY_TIMER_CASIO_DIAR, 5000u);
+                            TIM_delaySetTimer(DELAY_TIMER_CASIO_ERROR, 5000u);
                             break;
                         case 0x21u: // memory full
                             cd_state_receive = CD_STATE_RECEIVING_END_COMMUNICATION;
                             break;
                         default:
-                            if(TIM_delayIsTimerDown(DELAY_TIMER_CASIO_DIAR) == true) {
+                            if(TIM_delayIsTimerDown(DELAY_TIMER_CASIO_ERROR) == true) {
                                 cd_state_receive = CD_STATE_RECEIVING_END_COMMUNICATION;
                             }
                             break;
@@ -411,13 +445,13 @@ bool CD_task_receive(void) {
                 }/*
                 if(bIsReceivedCharacter(0x23u) == true) {
                     cd_state_receive = CD_STATE_RECEIVING_WAIT_TO_END;
-                    TIM_delaySetTimer(DELAY_TIMER_CASIO_DIAR, 5000u);
-                } else if(TIM_delayIsTimerDown(DELAY_TIMER_CASIO_DIAR) == true) {
+                    TIM_delaySetTimer(DELAY_TIMER_CASIO_ERROR, 5000u);
+                } else if(TIM_delayIsTimerDown(DELAY_TIMER_CASIO_ERROR) == true) {
                     cd_state_receive = CD_STATE_RECEIVING_END_COMMUNICATION;
                 }*/
                 break;
         case CD_STATE_RECEIVING_WAIT_TO_END:
-                if(TIM_delayIsTimerDown(DELAY_TIMER_CASIO_DIAR) == true) {
+                if(TIM_delayIsTimerDown(DELAY_TIMER_CASIO_ERROR) == true) {
                     cd_state_receive = CD_STATE_RECEIVING_END_COMMUNICATION;
                 }
                 break;
@@ -541,7 +575,7 @@ void CD_sendBuff(uint8_t *buff, cd_state_receiving_e newState, uint16_t setTim) 
         SPu1_sendChar(ch);
     }
     cd_state_receive = newState;
-    TIM_delaySetTimer(DELAY_TIMER_CASIO_DIAR, setTim);
+    TIM_delaySetTimer(DELAY_TIMER_CASIO_ERROR, setTim);
 }
 
 uint8_t CD_receive(void) {
@@ -610,4 +644,9 @@ bool bIsReceivedCharacter(uint8_t ch) {
 uint8_t *CD_getBuffer(void) {
 //	SPu1_sendChar(0x23u);
     return &cd_buffToSendBuff[CD_BUFF_PACKET_DATA];
+}
+
+void CD_setUserBuffer(uint8_t *buff, uint16_t sizeOfBuff) {
+    cd_buffUserData = buff;
+    cd_buffUserDataSize = sizeOfBuff;
 }

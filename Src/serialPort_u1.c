@@ -168,6 +168,8 @@ uint8_t SPu1_getData(void) {
 }
 
 void SPu1_clearReceivedData(void) {
+    SPu1_pWrite = 0u;
+    SPu1_pRead = 0u;
     FIFO_clearBuffer();
     while((USART1->ISR & USART_ISR_RXNE) != 0u) {
         (void)USART1->RDR;

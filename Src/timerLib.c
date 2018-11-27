@@ -1,11 +1,11 @@
 #include "timerLib.h"
 
 static uint16_t timersBuff[DELAY_TIMER_END];
-static bool tim_event;
+static uint16_t tim_event = 0u;
 
 void TIM2_IRQHandler() {
 	TIM2->SR &= (~TIM_SR_UIF_Msk);
-	tim_event = true;
+	tim_event++;
 }
 
 void TIM_delayInit(void) {
@@ -23,7 +23,7 @@ void TIM_delayInit(void) {
 		timersBuff[i] = 0u;
 	}
 	TIM2->CR1 |= TIM_CR1_CEN_Msk;
-	tim_event = false;
+	tim_event = 0u;
 	NVIC_EnableIRQ(TIM2_IRQn);
 }
 
@@ -46,12 +46,12 @@ void TIM_delaySetTimer(TIM_EN_delayTimers dt, uint16_t msTime) {
 
 void TIM_handleTask(void) {
 	TIM_EN_delayTimers i;
-	if(tim_event == true) {
-		tim_event = false;
-	  for(i = (TIM_EN_delayTimers) 0u; i < DELAY_TIMER_END; i++) {
-		  if(timersBuff[i] != 0u) {
-			  timersBuff[i]--;
-			}
-		}
-	}
+	while(0u != tim_event) {
+        tim_event--;
+        for(i = (TIM_EN_delayTimers) 0u; i < DELAY_TIMER_END; i++) {
+            if(timersBuff[i] != 0u) {
+                timersBuff[i]--;
+            }
+        }
+    }
 }

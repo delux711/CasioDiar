@@ -1,5 +1,6 @@
 #ifndef __myRtc_H
 #include <stdbool.h>
+#include <stdint.h>
 
 extern void myRtcInit(void);
 //extern void myRtcLcd(void);

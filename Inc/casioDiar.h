@@ -27,9 +27,11 @@ extern uint8_t CD_receive(void);
 extern void CD_sendToDiarConst(uint8_t *buff);
 extern void CD_senToDiarEndCommunication(void);
 extern uint8_t *CD_getBuffer(void);
+extern void CD_setUserBuffer(uint8_t *buff, uint16_t sizeOfBuff);
 
 /*
 The general field format for all fields in a record is:
+      0 1 2 3 4
     :llffoottdd...ddcc
 
 where:
@@ -88,7 +90,7 @@ cc  - Checksum                                          |   92  - expense (later
 
 Text data fields always have a field data type of 8xh.
 Example of text data field "1234":
-    :llffoottddddddddcc
+  :llffoottddddddddcc
   :0480000031323334B2
     || |   |       |
     || |   |       checksum 04+80+00+00+31+32+33+34+B2 = x00
