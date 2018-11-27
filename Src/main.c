@@ -15,6 +15,14 @@
 // 101: Main PLL clock selected - OFF
 // 110: LSI clock selected - 32kHz
 // 111: LSE clock selected - OFF
+
+void run_in_ram(void);
+void load_ramcode(void);
+extern char Image$$RW_CODE$$Base;		// kvoli testovaniu volania funkcie z RAM
+extern char Image$$RW_CODE$$Length; // kvoli testovaniu volania funkcie z RAM
+extern char Load$$RW_CODE$$Base;		// kvoli testovaniu volania funkcie z RAM
+__attribute__((section("TEMPDATASECTION"), zero_init)) uint8_t foo;
+
 /*
 static uint64_t *lcdRam1;
 static uint64_t *lcdRam2;
@@ -32,6 +40,7 @@ int main(void) {
 	LED_On(0);
 	LED_Off(0);
 	*/
+	load_ramcode();
 	tl_Init();
 	TIM_delayInit();
 	//LED_On(0);
@@ -57,7 +66,9 @@ int main(void) {
         CD_task();
         TIM_handleTask();
 		if(tl_getTlSample().hore) {
-			led1_on();
+			//led1_on();
+			run_in_ram();
+			foo++;
 			CD_sendToDiarConst(0u);
 		} else {
 			led1_off();
@@ -86,5 +97,23 @@ int main(void) {
 				printf("Count: %d", count);
 			}
 		}
+	}
+}
+
+// kvoli testovaniu volania funkcie z RAM
+__attribute__((section("RAMCODESECTION"))) void run_in_ram(void) {
+  __nop();
+	foo++;
+	led1_on();
+}
+
+// kvoli testovaniu volania funkcie z RAM
+void load_ramcode(void) {
+	uint32_t i;
+	char *from, *to;
+	to = &Image$$RW_CODE$$Base;
+	from = &Load$$RW_CODE$$Base;
+	for(i = 0; i < (size_t)&Image$$RW_CODE$$Length; i++) {
+		to[i] = from[i];
 	}
 }

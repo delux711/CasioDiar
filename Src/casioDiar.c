@@ -59,6 +59,7 @@ static uint8_t *cd_toSendPointer;
 static uint8_t cd_buffToSend1[] = ":02000002A0005C:0580000041686F6A31C8:00000001FF";
 static uint8_t cd_buffToSendNewNote[] = ":02000002A0005C";
 static uint8_t cd_buffToSendBuff[300] = ":0580000041686F6A31C8"; // Ahoj1
+//atic uint8_t cd_buffToSendBuff[300] = ":0580xx0041686F6A31C8"; // Ahoj1 xx offset
 static uint8_t cd_buffToSendAhoj[] = "12345678901234567890";
 static uint8_t cd_buffToSendSave[] = ":00000001FF";
 static uint8_t cd_buffToSendEndCom[] = ":000000FF01";
@@ -228,8 +229,8 @@ void CD_sendPrepareNote(uint8_t *buffText) {
     CD_buffToSendAddCdFormat(i);
     CD_buffToSendAdd('8');
     CD_buffToSendAdd('0');
-    CD_buffToSendAdd('0');
-    CD_buffToSendAdd('0');
+    CD_buffToSendAdd('0');	// offset in hex npr 0
+    CD_buffToSendAdd('0');	// offset            F - 0F=15 bytov od zaciatku
     CD_buffToSendAdd('0');
     CD_buffToSendAdd('0');
     i = 0;
