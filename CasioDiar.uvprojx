@@ -337,7 +337,7 @@
               <MiscControls></MiscControls>
               <Define></Define>
               <Undefine></Undefine>
-              <IncludePath>L:\MOJE_PROJEKTY\CasioDiar\Inc</IncludePath>
+              <IncludePath>.\Inc</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -426,6 +426,11 @@
               <FileType>1</FileType>
               <FilePath>.\Src\fifo_buffer.c</FilePath>
             </File>
+            <File>
+              <FileName>BMP180_pressure.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Src\BMP180_pressure.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -470,6 +475,11 @@
               <FileName>fifo_buffer.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\Inc\fifo_buffer.h</FilePath>
+            </File>
+            <File>
+              <FileName>BMP180_pressure.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Inc\BMP180_pressure.h</FilePath>
             </File>
           </Files>
         </Group>
