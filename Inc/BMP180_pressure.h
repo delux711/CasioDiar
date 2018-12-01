@@ -23,19 +23,19 @@ typedef union _BMP180_calVal {
 
 typedef struct _BMP180 {
     BMP180_calVal calVal;
-    long UT;
-    long UP;
-    long X1;
-    long X2;
-    long X3;
-    long B3;
+    int32_t UT;
+    int32_t UP;
+    int32_t X1;
+    int32_t X2;
+    int32_t X3;
+    int32_t B3;
     uint32_t B4;
-    long B5;
-    long B6;
+    int32_t B5;
+    int32_t B6;
     uint32_t B7;
     uint8_t oss;
-    long T;
-    long P;
+    int32_t T;
+    int32_t P;
 } BMP180;
 
 typedef enum _BMP180_eOverSample {
@@ -71,7 +71,7 @@ extern BMP180_eState BMP180_handleTask(void);
 extern void BMP180_Init(void);
 extern void BMP180_InitForced(void);
 extern bool BMP180_isPresent(void);
-extern long BMP180_getTemperature(void);
-extern long BMP180_getPressure(void);
+extern int32_t BMP180_getTemperature(void);
+extern int32_t BMP180_getPressure(void);
 
 #endif // _BMP180_PRESSURE

@@ -431,6 +431,16 @@
               <FileType>1</FileType>
               <FilePath>.\Src\BMP180_pressure.c</FilePath>
             </File>
+            <File>
+              <FileName>mfx_l4.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Src\mfx_l4.c</FilePath>
+            </File>
+            <File>
+              <FileName>mfx_l4_i2c.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Src\mfx_l4_i2c.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -480,6 +490,16 @@
               <FileName>BMP180_pressure.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\Inc\BMP180_pressure.h</FilePath>
+            </File>
+            <File>
+              <FileName>mfx_l4.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Inc\mfx_l4.h</FilePath>
+            </File>
+            <File>
+              <FileName>mfx_l4_i2c.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Inc\mfx_l4_i2c.h</FilePath>
             </File>
           </Files>
         </Group>

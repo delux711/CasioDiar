@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "BMP180_pressure.h"
+#include "mfx_l4.h"
 
 // SYSCLK - 4MHz
 // MSI - 4MHz
@@ -54,6 +55,8 @@ int main(void) {
     myRtcInit();
     RCC->CFGR |= (4u << RCC_CFGR_MCOPRE_Pos); // MCO / 16 IF 4
     SP_init();
+    
+    mfx_init();
 
     count = 0u;
 
