@@ -33,6 +33,7 @@ typedef struct _BMP180 {
     long B5;
     long B6;
     uint32_t B7;
+    uint8_t oss;
     long T;
     long P;
 } BMP180;
@@ -49,6 +50,8 @@ typedef enum _BMP180_eState {
     BMP180_STATE_SLEEP,
     BMP180_STATE_NOT_INIT,
     BMP180_STATE_NOT_PRESENT,
+    BMP180_STATE_PRESSURE,
+    BMP180_STATE_TEMPERATURE
 } BMP180_eState;
 
 extern BMP180 sensorPresure;
@@ -59,11 +62,14 @@ extern bool HI2C_writeByte(uint8_t addr, bool stop, uint8_t data);
 extern bool HI2C_writeAddr(uint8_t addr, bool stop);
 extern void BMP180_readCalData(void);
 extern void BMP180_readTemp(void);
+extern void BMP180_readTempForced(void);
 extern void BMP180_readPressureAndTemp(BMP180_eOverSample oss);
+extern void BMP180_readPressureAndTempForced(BMP180_eOverSample oss);
 extern void BMP180_reset(void);
 extern bool BMP180_doneSample(void);
 extern BMP180_eState BMP180_handleTask(void);
 extern void BMP180_Init(void);
+extern void BMP180_InitForced(void);
 extern bool BMP180_isPresent(void);
 extern long BMP180_getTemperature(void);
 extern long BMP180_getPressure(void);

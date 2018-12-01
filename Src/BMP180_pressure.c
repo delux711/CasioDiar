@@ -4,6 +4,8 @@
 static BMP180 sensorPresure;
 static bool BMP180_bBmp180present = false;
 static BMP180_eState BMP180_state = BMP180_STATE_NOT_INIT;
+void BMP180_calculateTemperature(void);
+void BMP180_calculatePressure(BMP180_eOverSample oss);
 
 bool BMP180_isDoneSample(void) {
     return (0u == (0x20u & HI2C_readByte(0xF4u, true)));
@@ -52,23 +54,7 @@ uint8_t HI2C_readByte(uint8_t addr, bool stop) {
     }
     return ret;
 }
-/*
-void BMP180_readCalData(void) {
-    uint8_t i;
-    if(true == HI2C0_bSetAddr(0xEFu & 0xFE)) { // write
-        if(true == HI2C0_bSetTxData(0xAAu, true)) { // write address with calibration data
-            if(true == HI2C0_bSetAddr(0xEFu)) { // read
-                for(i = 0; i < 10u; i++) {
-                    sensorPresure.calVal.buff[i] = (HI2C0_vTriggerReceive(false) << 8u);
-                    sensorPresure.calVal.buff[i] |= HI2C0_vTriggerReceive(false);
-                }
-                sensorPresure.calVal.buff[i] = (HI2C0_vTriggerReceive(false) << 8u);
-                sensorPresure.calVal.buff[i] |= HI2C0_vTriggerReceive(true);
-            }
-        }
-    }
-}
-*/
+
 void BMP180_readCalData(void) {
     uint8_t i;
     if(true == HI2C_writeAddr(0xAAu, true)) {
@@ -90,51 +76,62 @@ bool BMP180_startMeasurement(BMP180_eOverSample oss) {
     }
     return ret;
 }
-void BMP180_readTemp(void) {
+
+void BMP180_readTempForced(void) {
+    BMP180_state = BMP180_STATE_TEMPERATURE;
     if(true == BMP180_startMeasurement(BMP180_eOverSampleTemperature)) {
         sensorPresure.UT = (long)(HI2C_readByte(0xF6u, false) << 8u); // address with temparature
         sensorPresure.UT |= HI2C0_vTriggerReceive(true);
-        sensorPresure.X1 = sensorPresure.UT - sensorPresure.calVal.calBytes.AC6;
-        sensorPresure.X1 *= sensorPresure.calVal.calBytes.AC5;
-        sensorPresure.X1 /= 32768;  // 2^15
-        sensorPresure.X2 = sensorPresure.calVal.calBytes.MC * 2048; // 2^11
-        sensorPresure.X2 /= sensorPresure.X1 + sensorPresure.calVal.calBytes.MD;
-        sensorPresure.B5 = sensorPresure.X1 + sensorPresure.X2;
-        sensorPresure.T = (sensorPresure.B5 + 8u) / 16u;
+        BMP180_calculateTemperature();
     }
 }
-void BMP180_readPressureAndTemp(BMP180_eOverSample oss) {
-    BMP180_readTemp();
+    
+void BMP180_readPressureAndTempForced(BMP180_eOverSample oss) {
+    BMP180_readTempForced();
     if(true == BMP180_startMeasurement(oss)) {
         sensorPresure.UP =  (long)(HI2C_readByte(0xF6u, false) << 16u); // address with MSB pressure - address 0xF6
         sensorPresure.UP |= HI2C0_vTriggerReceive(false) << 8u;         // address with LSB pressure - address 0xF7
         sensorPresure.UP |= HI2C0_vTriggerReceive(true);                // address with XLSB pressure - address 0xF8
-        oss >>= 6u;
-        sensorPresure.UP >>= 8u - oss;
-        sensorPresure.B6 = sensorPresure.B5 - 4000u;
-        sensorPresure.X1 = sensorPresure.B6 * sensorPresure.B6;
-        sensorPresure.X1 /= 4096u; // 2^12
-        sensorPresure.X1 *= sensorPresure.calVal.calBytes.B2;
-        sensorPresure.X1 /= 2048u; // 2^11
-        sensorPresure.X2 = sensorPresure.calVal.calBytes.AC2 * sensorPresure.B6;
-        sensorPresure.X2 /= 2048u; // 2^11
-        sensorPresure.X3 = sensorPresure.X1 + sensorPresure.X2;
-        sensorPresure.B3 = (((sensorPresure.calVal.calBytes.AC1 * 4 + sensorPresure.X3) << oss) + 2u) / 4u;
-        sensorPresure.X1 = (sensorPresure.calVal.calBytes.AC3 * sensorPresure.B6) / 8192u; // 2^13
-        sensorPresure.X2 = (sensorPresure.calVal.calBytes.B1 * ((sensorPresure.B6 * sensorPresure.B6) / 4096u)) / 65536u; // 2^12; 2^16
-        sensorPresure.X3 = ((sensorPresure.X1 + sensorPresure.X2) + 2u) / 2u;
-        sensorPresure.B4 = sensorPresure.calVal.calBytes.AC4 * (uint32_t)(sensorPresure.X3 + 32768u) / 32768u; // 2^15
-        sensorPresure.B7 = ((uint32_t)sensorPresure.UP - sensorPresure.B3) * (50000u >> oss);
-        if(sensorPresure.B7 < 0x80000000u) {
-            sensorPresure.P = (sensorPresure.B7 * 2u) / sensorPresure.B4;
-        } else {
-            sensorPresure.P = (sensorPresure.B7 / sensorPresure.B4) * 2u;
-        }
-        sensorPresure.X1 = (sensorPresure.P / 256u) * (sensorPresure.P / 256);  // 2^8
-        sensorPresure.X1 = (sensorPresure.X1 * 3038u) / 65536u; // 2^16
-        sensorPresure.X2 = (-7357 * sensorPresure.P) / 65536;   // 2^16
-        sensorPresure.P = sensorPresure.P + (sensorPresure.X1 + sensorPresure.X2 + 3791) / 16;  // 2^4
+        BMP180_calculatePressure(oss);
     }
+}
+
+void BMP180_calculateTemperature(void) {
+    sensorPresure.X1 = sensorPresure.UT - sensorPresure.calVal.calBytes.AC6;
+    sensorPresure.X1 *= sensorPresure.calVal.calBytes.AC5;
+    sensorPresure.X1 /= 32768;  // 2^15
+    sensorPresure.X2 = sensorPresure.calVal.calBytes.MC * 2048; // 2^11
+    sensorPresure.X2 /= sensorPresure.X1 + sensorPresure.calVal.calBytes.MD;
+    sensorPresure.B5 = sensorPresure.X1 + sensorPresure.X2;
+    sensorPresure.T = (sensorPresure.B5 + 8u) / 16u;
+}
+    
+void BMP180_calculatePressure(BMP180_eOverSample oss) {
+    oss >>= 6u;
+    sensorPresure.UP >>= 8u - oss;
+    sensorPresure.B6 = sensorPresure.B5 - 4000u;
+    sensorPresure.X1 = sensorPresure.B6 * sensorPresure.B6;
+    sensorPresure.X1 /= 4096u; // 2^12
+    sensorPresure.X1 *= sensorPresure.calVal.calBytes.B2;
+    sensorPresure.X1 /= 2048u; // 2^11
+    sensorPresure.X2 = sensorPresure.calVal.calBytes.AC2 * sensorPresure.B6;
+    sensorPresure.X2 /= 2048u; // 2^11
+    sensorPresure.X3 = sensorPresure.X1 + sensorPresure.X2;
+    sensorPresure.B3 = (((sensorPresure.calVal.calBytes.AC1 * 4 + sensorPresure.X3) << oss) + 2u) / 4u;
+    sensorPresure.X1 = (sensorPresure.calVal.calBytes.AC3 * sensorPresure.B6) / 8192u; // 2^13
+    sensorPresure.X2 = (sensorPresure.calVal.calBytes.B1 * ((sensorPresure.B6 * sensorPresure.B6) / 4096u)) / 65536u; // 2^12; 2^16
+    sensorPresure.X3 = ((sensorPresure.X1 + sensorPresure.X2) + 2u) / 2u;
+    sensorPresure.B4 = sensorPresure.calVal.calBytes.AC4 * (uint32_t)(sensorPresure.X3 + 32768u) / 32768u; // 2^15
+    sensorPresure.B7 = ((uint32_t)sensorPresure.UP - sensorPresure.B3) * (50000u >> oss);
+    if(sensorPresure.B7 < 0x80000000u) {
+        sensorPresure.P = (sensorPresure.B7 * 2u) / sensorPresure.B4;
+    } else {
+        sensorPresure.P = (sensorPresure.B7 / sensorPresure.B4) * 2u;
+    }
+    sensorPresure.X1 = (sensorPresure.P / 256u) * (sensorPresure.P / 256);  // 2^8
+    sensorPresure.X1 = (sensorPresure.X1 * 3038u) / 65536u; // 2^16
+    sensorPresure.X2 = (-7357 * sensorPresure.P) / 65536;   // 2^16
+    sensorPresure.P = sensorPresure.P + (sensorPresure.X1 + sensorPresure.X2 + 3791) / 16;  // 2^4
 }
 
 void BMP180_Init(void) {
@@ -159,6 +156,15 @@ long BMP180_getPressure(void) {
     return sensorPresure.P;
 }
 
+void BMP180_readPressureAndTemp(BMP180_eOverSample oss) {
+    BMP180_state = BMP180_STATE_PRESSURE;
+    sensorPresure.oss = (uint8_t) oss;
+}
+
+void BMP180_readTemp(void) {
+    BMP180_state = BMP180_STATE_TEMPERATURE;
+}
+
 BMP180_eState BMP180_handleTask(void) {
     switch(BMP180_state) {
         case BMP180_STATE_SLEEP:
@@ -171,7 +177,8 @@ BMP180_eState BMP180_handleTask(void) {
                 BMP180_state = BMP180_STATE_SLEEP;
             }
             break;
-        
+        case BMP180_STATE_TEMPERATURE:
+            break;
     }
     return BMP180_state;
 }

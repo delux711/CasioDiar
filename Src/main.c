@@ -172,7 +172,7 @@ int main(void) {
                 TIM_delaySetTimer(DELAY_MAIN_LCD_PRESSURE_SHOW, 1000u);
                 TIM_delaySetTimer(DELAY_MAIN_LCD_SHOW, 1000u);
                 //BMP180_readTemp();
-                BMP180_readPressureAndTemp(BMP180_eOverSampleMax25_5ms);
+                BMP180_readPressureAndTempForced(BMP180_eOverSampleMax25_5ms);
                 //sprintf((char*)buff, "%06Ld°C", sensorPresure.T);
                 sprintf((char*)buff, "%d.%d°C", (int8_t)(BMP180_getTemperature() / 10u), (BMP180_getTemperature() / 100u));
                 LCD_GLASS_DisplayString((uint8_t*) buff);
