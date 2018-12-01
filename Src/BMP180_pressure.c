@@ -108,7 +108,7 @@ void BMP180_calculateTemperature(void) {
     
 void BMP180_calculatePressure(BMP180_eOverSample oss) {
     oss >>= 6u;
-    sensorPresure.UP >>= 8u - oss;
+    sensorPresure.UP >>= (8u - oss);
     sensorPresure.B6 = sensorPresure.B5 - 4000u;
     sensorPresure.X1 = sensorPresure.B6 * sensorPresure.B6;
     sensorPresure.X1 /= 4096u; // 2^12
@@ -120,7 +120,7 @@ void BMP180_calculatePressure(BMP180_eOverSample oss) {
     sensorPresure.B3 = (((sensorPresure.calVal.calBytes.AC1 * 4 + sensorPresure.X3) << oss) + 2u) / 4u;
     sensorPresure.X1 = (sensorPresure.calVal.calBytes.AC3 * sensorPresure.B6) / 8192u; // 2^13
     sensorPresure.X2 = (sensorPresure.calVal.calBytes.B1 * ((sensorPresure.B6 * sensorPresure.B6) / 4096u)) / 65536u; // 2^12; 2^16
-    sensorPresure.X3 = ((sensorPresure.X1 + sensorPresure.X2) + 2u) / 2u;
+    sensorPresure.X3 = ((sensorPresure.X1 + sensorPresure.X2) + 2) / 4;
     sensorPresure.B4 = sensorPresure.calVal.calBytes.AC4 * (uint32_t)(sensorPresure.X3 + 32768u) / 32768u; // 2^15
     sensorPresure.B7 = ((uint32_t)sensorPresure.UP - sensorPresure.B3) * (50000u >> oss);
     if(sensorPresure.B7 < 0x80000000u) {

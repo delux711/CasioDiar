@@ -157,9 +157,9 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
-          <LineNumber>155</LineNumber>
+          <LineNumber>95</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134219600</Address>
+          <Address>134220352</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
@@ -168,7 +168,39 @@
           <BreakIfRCount>1</BreakIfRCount>
           <Filename>.\Src\BMP180_pressure.c</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\CasioDiar\Src/BMP180_pressure.c\155</Expression>
+          <Expression>\\CasioDiar\Src/BMP180_pressure.c\95</Expression>
+        </Bp>
+        <Bp>
+          <Number>1</Number>
+          <Type>0</Type>
+          <LineNumber>85</LineNumber>
+          <EnabledFlag>1</EnabledFlag>
+          <Address>134220410</Address>
+          <ByteObject>0</ByteObject>
+          <HtxType>0</HtxType>
+          <ManyObjects>0</ManyObjects>
+          <SizeOfObject>0</SizeOfObject>
+          <BreakByAccess>0</BreakByAccess>
+          <BreakIfRCount>1</BreakIfRCount>
+          <Filename>.\Src\BMP180_pressure.c</Filename>
+          <ExecCommand></ExecCommand>
+          <Expression>\\CasioDiar\Src/BMP180_pressure.c\85</Expression>
+        </Bp>
+        <Bp>
+          <Number>2</Number>
+          <Type>0</Type>
+          <LineNumber>123</LineNumber>
+          <EnabledFlag>1</EnabledFlag>
+          <Address>134219744</Address>
+          <ByteObject>0</ByteObject>
+          <HtxType>0</HtxType>
+          <ManyObjects>0</ManyObjects>
+          <SizeOfObject>0</SizeOfObject>
+          <BreakByAccess>0</BreakByAccess>
+          <BreakIfRCount>1</BreakIfRCount>
+          <Filename>.\Src\BMP180_pressure.c</Filename>
+          <ExecCommand></ExecCommand>
+          <Expression>\\CasioDiar\Src/BMP180_pressure.c\123</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>
@@ -236,6 +268,11 @@
           <count>12</count>
           <WinNumber>1</WinNumber>
           <ItemText>buff</ItemText>
+        </Ww>
+        <Ww>
+          <count>13</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>oss</ItemText>
         </Ww>
       </WatchWindow1>
       <WatchWindow2>
