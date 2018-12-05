@@ -44,6 +44,25 @@ int main(void) {
     uint8_t cd_buff[300];
     uint32_t count = 0;
     uint8_t stredTmp = 0;
+
+    /**** AUDIO - CS43L22 - U13 ****/
+    RCC->AHB2ENR |= RCC_AHB2ENR_GPIOBEN;     // enable clock for GPIOB
+    //GPIOB->MODER &= ~(GPIO_MODER_MODE6 | GPIO_MODER_MODE7);           // PB6 and PB7 to INPUT mode
+    //GPIOB->OTYPER |= (uint32_t)(GPIO_OTYPER_OT6 | GPIO_OTYPER_OT7);   // PB6 and PB7 to open-drain
+    GPIOB->PUPDR |= ((1u << GPIO_PUPDR_PUPD6_Pos) & (1u << GPIO_PUPDR_PUPD7_Pos)); // Pull-up enable
+    RCC->AHB2ENR &= ~(RCC_AHB2ENR_GPIOBEN);  // disable clock for GPIOB
+
+    RCC->AHB2ENR |= RCC_AHB2ENR_GPIOEEN;     // enable clock for GPIOE
+    //PE2->SAI1_MCK, PE4->SAI1_FS, PE5->SAI1_SCK, PE6->SAI1_SD to log 0 via pull-down
+    //PE3->AUDIO_RST to log 0
+    GPIOE->MODER |= (1u << GPIO_MODER_MODE3);// PE3 to output mode (AUDIO_RST)
+    GPIOE->ODR &= ~(GPIO_ODR_OD3);           // PE3 to log 0
+    GPIOE->PUPDR |= ((2u << GPIO_PUPDR_PUPD2_Pos) & (2u << GPIO_PUPDR_PUPD4_Pos) & // PE2, PE4, PE5 and PE6
+                     (2u << GPIO_PUPDR_PUPD5_Pos) & (2u << GPIO_PUPDR_PUPD6_Pos)); // Pull-down enable
+    /**** Microphone - MP34DT01 - U17****/
+    //PE9->AUDIO_CLK, PE7->AUDIO_DIN (AUDIO_DIN has HI impedance if AUDIO_CLK is UP)
+    GPIOE->PUPDR |= ((1u << GPIO_PUPDR_PUPD9_Pos) & (1u << GPIO_PUPDR_PUPD7_Pos)); // Pull-up PE7 and PE9
+    RCC->AHB2ENR &= ~(RCC_AHB2ENR_GPIOEEN);   /* disable clock for GPIOE */
     
 	SPu1_init();
 	

@@ -5,6 +5,7 @@
 const uint8_t HI2Cmfx_ucMaxWaitState = 0xFF;
 
 
+static uint8_t HI2Cmfx_chipAddr;
 static uint8_t HI2Cmfx_ucError;
 static uint8_t HI2Cmfx_ucLastRx;
 static bool HI2Cmfx_bEventEnabled;
@@ -117,7 +118,6 @@ void HI2Cmfx_vHandleEvent(void)
 
 }
 
-
 /*************************************************************************************/
 
 /* HI2Cmfx_vWaitForSlave() */
@@ -155,7 +155,8 @@ static void HI2Cmfx_vMakeStopCondition(void) {
 
 }
 
-void HI2Cmfx_vInit(uint8_t ucIndex) {
+void HI2Cmfx_vInit(uint8_t chipAddress) {
+    HI2Cmfx_chipAddr = chipAddress;
 #ifdef HI2C_SPECIAL_INIT 
    HI2Cmfx_vInitPort(); /* Initialize the special features of the periphery. */
 #endif
@@ -326,4 +327,47 @@ bool HI2Cmfx_bForceBusRelease(void) {
       }
    }
    return (bSdaStatus);
+}
+
+uint8_t HI2C_readByte(uint8_t addr, bool stop) {
+    uint8_t ret;
+    ret = 0u;
+    if(true == HI2C_writeAddr(addr, true)) {
+        if(true == HI2C0_bSetAddr(HI2Cmfx_chipAddr & 0x01u)) { // read
+            ret = HI2C0_vTriggerReceive(stop);
+        }
+    }
+    return ret;
+}
+    
+bool HI2C_writeByte(uint8_t addr, bool stop, uint8_t data) {
+    bool ret;
+    ret = false;
+    if(true == HI2C_writeAddr(addr, false)) { // write
+        if(true == HI2C0_bSetTxData(data, stop)) { // write address
+            ret = true;
+        }
+    }
+    return ret;
+}
+
+bool HI2C_writeAddr(uint8_t addr, bool stop) {
+    bool ret;
+    ret = false;
+    if(true == HI2C0_bSetAddr(HI2Cmfx_chipAddr)) { // write
+        if(true == HI2C0_bSetTxData(addr, stop)) { // write address
+            ret = true;
+        } else {
+            BMP180_bBmp180present = false;
+            BMP180_state = BMP180_STATE_NOT_PRESENT;
+        }
+    } else {
+        BMP180_bBmp180present = false;
+        BMP180_state = BMP180_STATE_NOT_PRESENT;
+    }
+    return ret;
+}
+
+void HI2C_setChipAddress(uint8_t chipAddress) {
+    HI2Cmfx_chipAddr = chipAddress;
 }
