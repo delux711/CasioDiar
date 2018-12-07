@@ -55,7 +55,7 @@ int main(void) {
     RCC->AHB2ENR |= RCC_AHB2ENR_GPIOEEN;     // enable clock for GPIOE
     //PE2->SAI1_MCK, PE4->SAI1_FS, PE5->SAI1_SCK, PE6->SAI1_SD to log 0 via pull-down
     //PE3->AUDIO_RST to log 0
-    GPIOE->MODER |= (1u << GPIO_MODER_MODE3);// PE3 to output mode (AUDIO_RST)
+    GPIOE->MODER |= (1u << GPIO_MODER_MODE3_Pos);// PE3 to output mode (AUDIO_RST)
     GPIOE->ODR &= ~(GPIO_ODR_OD3);           // PE3 to log 0
     GPIOE->PUPDR |= ((2u << GPIO_PUPDR_PUPD2_Pos) & (2u << GPIO_PUPDR_PUPD4_Pos) & // PE2, PE4, PE5 and PE6
                      (2u << GPIO_PUPDR_PUPD5_Pos) & (2u << GPIO_PUPDR_PUPD6_Pos)); // Pull-down enable

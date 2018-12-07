@@ -32,10 +32,10 @@ extern uint8_t HI2Cmfx_ucError;
 extern uint8_t HI2Cmfx_ucLastRx;
 extern bool  HI2Cmfx_bEventEnabled;
 
-extern uint8_t HI2C_readByte(uint8_t addr, bool stop);
-extern bool HI2C_writeByte(uint8_t addr, bool stop, uint8_t data);
-extern bool HI2C_writeAddr(uint8_t addr, bool stop);
-extern void HI2C_setChipAddress(uint8_t chipAddress)
+extern uint8_t HI2Cmfx_readByte(uint8_t addr, bool stop);
+extern bool HI2Cmfx_writeByte(uint8_t addr, bool stop, uint8_t data);
+extern bool HI2Cmfx_writeAddr(uint8_t addr, bool stop);
+extern void HI2Cmfx_setChipAddress(uint8_t chipAddress);
 
 /************************************************************************************/
 
