@@ -89,7 +89,6 @@ static uint16_t cd_pointerRecBuff;
 static uint16_t cd_buffPointerToSendBuff = 0u;
 static uint8_t *cd_toSendPointer;
 static uint8_t cd_quantityForReceive;   // kolko bytov pride v aktualnom packete
-static uint16_t cd_startOfPacket;
 static uint8_t cd_buffToSend1[] = ":02000002A0005C:0580000041686F6A31C8:00000001FF";
 static uint8_t cd_buffToSendNewNote[] = ":02000002A0005C";
 //static uint8_t C[300] = ":0580000041686F6A31C8"; // Ahoj1
@@ -231,7 +230,6 @@ cd_state_e CD_task_send(void) {
             if(true == SPu1_isNewData()) {
                 temp = SPu1_getData();
                 if(':' == temp) {
-                    cd_startOfPacket = cd_pointerRecBuff;
                     cd_buffToSendBuff[cd_pointerRecBuff++] = temp;  // :llffoottddddcc (here is :)
                     TIM_delaySetTimer(DELAY_TIMER_CASIO_ERROR, 150u);
                     cd_state_send = CD_STATE_SENDING_PACKET_QUANTITY;

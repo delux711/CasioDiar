@@ -6,6 +6,13 @@ bool mfx_initPort(void);
 bool mfx_initConstValue(void);
 void mfx_initIntEn(void);
 
+static int32_t mfx_result = 0;
+void EXTI15_10_IRQHandler(void) {
+	mfx_result = mfx_iddGetMeas();
+	EXTI->PR1 |= EXTI_PR1_PIF13;
+	(void)mfx_result;
+}
+
 bool mfx_initForced(void) {
     bool ret;
     uint16_t temp;
@@ -14,7 +21,7 @@ bool mfx_initForced(void) {
     /* Initialize MFX */
     // reset MFX ( SYS_CTRL = SWRST )
     if(true == mfx_initPort()) {
-        for(temp = 0u; temp < 10000; temp++);   //delay_ms(100);
+        for(temp = 0u; temp < 1000u; temp++);   //delay_ms(100);
         // IRQ pin -> push-pull, active high
         // ( IRQ_OUT = OUT_PIN_TYPE_PUSHPULL | OUT_PIN_POLARITY_HIGH )
         if(true == HI2Cmfx_writeByte(0x41u, true, 0x03u)) {
@@ -121,9 +128,9 @@ bool mfx_initPort(void) {
 
 void mfx_initIntEn(void) {
     /* enable interrupts for external interrupt lines 4 - 15 */
-    EXTI->PR |= EXTI_PR_PR13; // clear pending interrupt (if it is pending)
-    NVIC_EnableIRQ( EXTI4_15_IRQn );
-    NVIC_SetPriority( EXTI4_15_IRQn, IDD_INT_PRIO );
+    EXTI->PR1 |= EXTI_PR1_PIF13;   // clear pending interrupt (if it is pending)
+    NVIC_EnableIRQ(EXTI15_10_IRQn);
+    //NVIC_SetPriority(EXTI15_10_IRQn, IDD_INT_PRIO);
 }
 
 e_mfx_status mfx_handleTask(void) {

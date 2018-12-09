@@ -36,6 +36,7 @@ extern uint8_t HI2Cmfx_readByte(uint8_t addr, bool stop);
 extern bool HI2Cmfx_writeByte(uint8_t addr, bool stop, uint8_t data);
 extern bool HI2Cmfx_writeAddr(uint8_t addr, bool stop);
 extern void HI2Cmfx_setChipAddress(uint8_t chipAddress);
+extern bool HI2Cmfx_getChipAddress(void);
 
 /************************************************************************************/
 

@@ -371,3 +371,7 @@ bool HI2Cmfx_writeAddr(uint8_t addr, bool stop) {
 void HI2Cmfx_setChipAddress(uint8_t chipAddress) {
     HI2Cmfx_chipAddr = chipAddress;
 }
+
+bool HI2Cmfx_getChipAddress(void) {
+	return HI2Cmfx_isChippresent;
+}

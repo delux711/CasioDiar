@@ -11,6 +11,7 @@
 #include <stdbool.h>
 #include "BMP180_pressure.h"
 #include "mfx_l4.h"
+#include "tm1638.h"
 
 // SYSCLK - 4MHz
 // MSI - 4MHz
@@ -75,7 +76,10 @@ int main(void) {
     RCC->CFGR |= (4u << RCC_CFGR_MCOPRE_Pos); // MCO / 16 IF 4
     SP_init();
     
-    mfx_init();
+    mfx_initForced();
+	tm1638_init();
+	tm1638_show((uint8_t*)"98765432");
+	tm1638_showPos(4u, '0');
 
     count = 0u;
 
@@ -174,6 +178,7 @@ int main(void) {
         if(tl_getTl().dole) {
 			CD_senToDiarEndCommunication();
             LCD_GLASS_DisplayString(testDiar);
+			mfx_iddReqMeas(10u);
 		} else {
 		}
 		if(tl_getTl().stred) {
