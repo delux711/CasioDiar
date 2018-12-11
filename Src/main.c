@@ -21,12 +21,43 @@
 // 110: LSI clock selected - 32kHz
 // 111: LSE clock selected - OFF
 
+uint8_t charsToHex(uint8_t ch1, uint8_t ch2);
+void charToHexString(uint8_t* buff, uint8_t ch);
 void run_in_ram(void);
 void load_ramcode(void);
 extern char Image$$RW_CODE$$Base;		// kvoli testovaniu volania funkcie z RAM
 extern char Image$$RW_CODE$$Length; // kvoli testovaniu volania funkcie z RAM
 extern char Load$$RW_CODE$$Base;		// kvoli testovaniu volania funkcie z RAM
 __attribute__((section("TEMPDATASECTION"), zero_init)) uint8_t foo;
+
+uint8_t charsToHex(uint8_t ch1, uint8_t ch2) {
+    uint8_t i, j, ch;
+    j = 0u;
+    ch = ch1;
+    for(i = 0; i < 2u; i++) {
+        j <<= 4u;
+        if('A' <= ch) {
+            ch += 9u;
+        }
+        j |= (ch & 0x0Fu);
+        ch = ch2;
+    }
+    return j;
+}
+
+void charToHexString(uint8_t* buff, uint8_t ch) {
+    uint8_t i;
+    buff[0] = (ch & 0xF0u) >> 4u;
+    for(i = 0; i < 2u; i++) {
+        if(9u < buff[i]) {
+            buff[i] -= 9;
+            buff[i] |= 0x40u;
+        } else {
+            buff[i] |= 0x30u;
+        }
+        buff[i + 1u] = ch & 0x0Fu;
+    }
+}
 
 /*
 static uint64_t *lcdRam1;
@@ -40,7 +71,7 @@ static uint8_t receiveP = 0;
 int main(void) {
     bool lcdIsShift;
 	bool cdNewData = false;
-    uint8_t i, ch;
+    uint8_t i, j, ch;
 	uint8_t buff[50];
     uint8_t cd_buff[300];
     uint32_t count = 0;
@@ -109,11 +140,34 @@ int main(void) {
             ch = SP_getData();
             if((ch == '\r') || (18u < receiveP)) {
                 receiveBuff[receiveP++] = '\0';
-                //receiveBuff[7] = '\0';
-							LCD_GLASS_DisplayString(receiveBuff);
+                LCD_GLASS_DisplayString(receiveBuff);
                 (void)SP_sendString(receiveBuff);
-                receiveP = 0u;
                 TIM_delaySetTimer(DELAY_MAIN_LCD_SHOW, 2000u);
+                if('s' == receiveBuff[receiveP - 3u]) {
+                    tm1638_sendCommand(charsToHex(receiveBuff[receiveP - 2u], receiveBuff[receiveP - 1u]));
+                } else if('d' == receiveBuff[0]) {
+                    tm1638_show(&receiveBuff[1]);
+                } else if('a' == receiveBuff[0]) {
+                    i = receiveBuff[1] & 0x0Fu;
+                    tm1638_showPos(i, receiveBuff[2]);
+                } else if('p' == receiveBuff[0]) {
+                    i = 0u;
+                    j = 1u;
+                    ch = (receiveP - 1u) / 2u;
+                    for(i = 0u; i < ch; i++) {
+                        receiveBuff[i] = charsToHex(receiveBuff[j], receiveBuff[j + 1u]);
+                        j += 2u;
+                    }
+                    tm1638_sendPacket(receiveBuff, ch);
+                } else if('r' == receiveBuff[0]) {
+                    tm1638_readTl(receiveBuff);
+                    for(i = 0; i < 4u; i++) {
+                        charToHexString(&receiveBuff[(i * 2u) + 4u], receiveBuff[i]);
+                    }
+                    (void)SP_sendBuff(&receiveBuff[4], 8u);
+                }
+                receiveP = 0u;
+                
             } else {
                 receiveBuff[receiveP++] = ch;
             }
@@ -212,6 +266,19 @@ int main(void) {
                 LCD_GLASS_DisplayString((uint8_t*) buff);
             }
         }
+        if(TM1638_STATUS_TL_DONE == TM1638_handleTaskTl()) {
+            ch = tm1638_getTl();
+            for(i = 0; i < 8u; i++) {
+                if(ch & 0x01u) {
+                    j = '1';
+                } else {
+                    j = '0';
+                }
+                ch >>= 1u;
+                tm1638_showPos(i, j);
+            }
+        }
+        
 	} // while(1);
 }
 

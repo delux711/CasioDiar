@@ -23,25 +23,47 @@ HSB    MSB  HSB    MSB	(1-LEDy)
    SEG1     SEG2     SEG3     SEG4     SEG5     SEG6     SEG7     SEG8
 */
 
+#define TM1638_MAX_DONE_COUNT   (10u)
+
+typedef enum _TM1638_status_tl {
+    TM1638_STATUS_TL_NOT_INIT,
+    TM1638_STATUS_TL_NOT_INIT2,
+    TM1638_STATUS_TL_WRITE,
+    /* Must be together! */
+    TM1638_STATUS_TL_READ1,
+    TM1638_STATUS_TL_READ2,
+    TM1638_STATUS_TL_READ3,
+    TM1638_STATUS_TL_READ4,
+    TM1638_STATUS_TL_CALC,
+    /* Must be together! */
+    TM1638_STATUS_TL_DONE
+} TM1638_status_tl;
+
+
 #define TM1638_SET_ADDRESS			(0xC0u)
 
 #define TM1638_COMMAND_WRITE_DATA	(0x40u)
 #define TM1638_COMMAND_READ_DATA	(0x42u)
 #define TM1638_COMMAND_ADDRESS_AUTO	(0x43u)
 
-#define TM1638_COMMAND_PULSE_1_16	(0x80u)
-#define TM1638_COMMAND_PULSE_2_16	(0x81u)
-#define TM1638_COMMAND_PULSE_4_16	(0x82u)
-#define TM1638_COMMAND_PULSE_10_16	(0x83u)
-#define TM1638_COMMAND_PULSE_11_16	(0x84u)
-#define TM1638_COMMAND_PULSE_12_16	(0x85u)
-#define TM1638_COMMAND_PULSE_13_16	(0x86u)
-#define TM1638_COMMAND_PULSE_14_16	(0x87u)
-#define TM1638_COMMAND_LCD_OFF		(0x80u)
-#define TM1638_COMMAND_LCD_ON		(0x8Fu)
+#define TM1638_COMMAND_LCD_ON_PULSE_1_16	(0x88u)
+#define TM1638_COMMAND_LCD_ON_PULSE_2_16	(0x89u)
+#define TM1638_COMMAND_LCD_ON_PULSE_4_16	(0x8Au)
+#define TM1638_COMMAND_LCD_ON_PULSE_10_16	(0x8Bu)
+#define TM1638_COMMAND_LCD_ON_PULSE_11_16	(0x8Cu)
+#define TM1638_COMMAND_LCD_ON_PULSE_12_16	(0x8Du)
+#define TM1638_COMMAND_LCD_ON_PULSE_13_16	(0x8Eu)
+#define TM1638_COMMAND_LCD_ON_PULSE_14_16	(0x8Fu)
+#define TM1638_COMMAND_LCD_OFF      		(0x80u)
+#define TM1638_COMMAND_LCD_ON_MAX           (0x8Fu)
 
+extern TM1638_status_tl TM1638_handleTaskTl(void);
+extern uint8_t tm1638_getTl(void);
 extern void tm1638_init(void);
+extern void tm1638_sendCommand(uint8_t comm);
+extern void tm1638_sendPacket(uint8_t *buff, uint8_t size);
 extern void tm1638_show(uint8_t *buff);
 extern void tm1638_showPos(uint8_t position, uint8_t ch);
+extern void tm1638_readTl(uint8_t *buff);
 
 #endif
