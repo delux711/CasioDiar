@@ -69,6 +69,7 @@ static uint8_t testDiar[] = { "Ing.Pavol Pusztai, Slovinska 1, 05342 Krompachy."
 static uint8_t receiveBuff[50];
 static uint8_t receiveP = 0;
 int main(void) {
+    bool tm_show = false;
     bool lcdIsShift;
 	bool cdNewData = false;
     uint8_t i, j, ch;
@@ -267,16 +268,21 @@ int main(void) {
             }
         }
         if(TM1638_STATUS_TL_DONE == TM1638_handleTaskTl()) {
-            ch = tm1638_getTl();
-            for(i = 0; i < 8u; i++) {
-                if(ch & 0x01u) {
-                    j = '1';
-                } else {
-                    j = '0';
+            if(true == tm_show) {
+                tm_show = false;
+                ch = tm1638_getTl();
+                for(i = 1u; i < 9u; i++) {
+                    if(ch & 0x80u) {
+                        j = '1';
+                    } else {
+                        j = '0';
+                    }
+                    ch <<= 1u;
+                    tm1638_showPos(i, j);
                 }
-                ch >>= 1u;
-                tm1638_showPos(i, j);
             }
+        } else {
+            tm_show = true;
         }
         
 	} // while(1);

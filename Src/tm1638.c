@@ -262,6 +262,10 @@ TM1638_status_tl TM1638_handleTaskTl(void) {
             statusTl = TM1638_STATUS_TL_READ1;
             break;
         case TM1638_STATUS_TL_READ1:
+        case TM1638_STATUS_TL_READ2:
+        case TM1638_STATUS_TL_READ3:
+        case TM1638_STATUS_TL_READ4:
+            ch = 0u;
             for(i = 0u; i < 8u; i++) {
                 TM_CLK_0();
                 ch >>= 1u;
@@ -274,6 +278,12 @@ TM1638_status_tl TM1638_handleTaskTl(void) {
             }
             statusTlBuff[(uint8_t)(statusTl - TM1638_STATUS_TL_READ1)] = ch;
             statusTl++;
+            break;
+        case TM1638_STATUS_TL_READ_DONE:
+            TM_DIO_OUT();
+            TM_STB_1();
+            tm1638_sendCommand(TM1638_COMMAND_WRITE_DATA);
+            statusTl = TM1638_STATUS_TL_CALC;
             break;
         case TM1638_STATUS_TL_CALC:
             statusTlMsk = 0u;

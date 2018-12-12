@@ -23,7 +23,7 @@ HSB    MSB  HSB    MSB	(1-LEDy)
    SEG1     SEG2     SEG3     SEG4     SEG5     SEG6     SEG7     SEG8
 */
 
-#define TM1638_MAX_DONE_COUNT   (10u)
+#define TM1638_MAX_DONE_COUNT   (20u)
 
 typedef enum _TM1638_status_tl {
     TM1638_STATUS_TL_NOT_INIT,
@@ -34,8 +34,9 @@ typedef enum _TM1638_status_tl {
     TM1638_STATUS_TL_READ2,
     TM1638_STATUS_TL_READ3,
     TM1638_STATUS_TL_READ4,
-    TM1638_STATUS_TL_CALC,
+    TM1638_STATUS_TL_READ_DONE,
     /* Must be together! */
+    TM1638_STATUS_TL_CALC,
     TM1638_STATUS_TL_DONE
 } TM1638_status_tl;
 
