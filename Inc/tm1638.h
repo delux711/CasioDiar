@@ -7,7 +7,7 @@
 /*
   Byte0        Byte1  Byte2 Byte3 Byte4 Byte5 Byte6 Byte7 Byte8 Byte9 Byte10 Byte11 Byte12 Byte13 Byte14 Byte15
   Seg1         Led1   Seg2  Led2  Seg3  Led3  Seg4  Led4  Seg5  Led5  Seg6   Led6   Seg7   Led7   Seg8   Led8
-HSB    MSB  HSB    MSB	(1-LEDy)
+HSB    MSB  HSB    MSB    (1-LEDy)
  XGFEDCBA    000000001
 ----------------------------------------------------------------------------
 |  LED1     LED2     LED3     LED4     LED5     LED6     LED7     LED8     |
@@ -41,22 +41,22 @@ typedef enum _TM1638_status_tl {
 } TM1638_status_tl;
 
 
-#define TM1638_SET_ADDRESS			(0xC0u)
+#define TM1638_SET_ADDRESS                   (0xC0u)
 
-#define TM1638_COMMAND_WRITE_DATA	(0x40u)
-#define TM1638_COMMAND_READ_DATA	(0x42u)
-#define TM1638_COMMAND_ADDRESS_AUTO	(0x43u)
+#define TM1638_COMMAND_WRITE_DATA            (0x40u)
+#define TM1638_COMMAND_READ_DATA             (0x42u)
+#define TM1638_COMMAND_ADDRESS_AUTO          (0x43u)
 
-#define TM1638_COMMAND_LCD_ON_PULSE_1_16	(0x88u)
-#define TM1638_COMMAND_LCD_ON_PULSE_2_16	(0x89u)
-#define TM1638_COMMAND_LCD_ON_PULSE_4_16	(0x8Au)
-#define TM1638_COMMAND_LCD_ON_PULSE_10_16	(0x8Bu)
-#define TM1638_COMMAND_LCD_ON_PULSE_11_16	(0x8Cu)
-#define TM1638_COMMAND_LCD_ON_PULSE_12_16	(0x8Du)
-#define TM1638_COMMAND_LCD_ON_PULSE_13_16	(0x8Eu)
-#define TM1638_COMMAND_LCD_ON_PULSE_14_16	(0x8Fu)
-#define TM1638_COMMAND_LCD_OFF      		(0x80u)
-#define TM1638_COMMAND_LCD_ON_MAX           (0x8Fu)
+#define TM1638_COMMAND_LCD_ON_PULSE_1_16     (0x88u)
+#define TM1638_COMMAND_LCD_ON_PULSE_2_16     (0x89u)
+#define TM1638_COMMAND_LCD_ON_PULSE_4_16     (0x8Au)
+#define TM1638_COMMAND_LCD_ON_PULSE_10_16    (0x8Bu)
+#define TM1638_COMMAND_LCD_ON_PULSE_11_16    (0x8Cu)
+#define TM1638_COMMAND_LCD_ON_PULSE_12_16    (0x8Du)
+#define TM1638_COMMAND_LCD_ON_PULSE_13_16    (0x8Eu)
+#define TM1638_COMMAND_LCD_ON_PULSE_14_16    (0x8Fu)
+#define TM1638_COMMAND_LCD_OFF               (0x80u)
+#define TM1638_COMMAND_LCD_ON_MAX            (0x8Fu)
 
 extern TM1638_status_tl TM1638_handleTaskTl(void);
 extern uint8_t tm1638_getTl(void);

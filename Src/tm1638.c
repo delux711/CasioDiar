@@ -18,58 +18,93 @@ uint8_t tm_convToDigit(uint8_t ch);
 void tm_sendBuffToShow(void);
 
 
-#define TM_STB_0()	do { GPIOE->BSRR |= GPIO_BSRR_BR13; } while(0u)
-#define TM_STB_1()	do { GPIOE->BSRR |= GPIO_BSRR_BS13; } while(0u)
+#define TM_STB_0()    do { GPIOE->BSRR |= GPIO_BSRR_BR13; } while(0u)
+#define TM_STB_1()    do { GPIOE->BSRR |= GPIO_BSRR_BS13; } while(0u)
 
-#define TM_CLK_0()	do { GPIOE->BSRR |= GPIO_BSRR_BR14; } while(0u)
-#define TM_CLK_1()	do { GPIOE->BSRR |= GPIO_BSRR_BS14; } while(0u)
+#define TM_CLK_0()    do { GPIOE->BSRR |= GPIO_BSRR_BR14; } while(0u)
+#define TM_CLK_1()    do { GPIOE->BSRR |= GPIO_BSRR_BS14; } while(0u)
 
-#define TM_DIO_IN()		do { GPIOE->MODER &= ~GPIO_MODER_MODE15_Msk; } while(0u)
-#define TM_DIO_OUT()	do { GPIOE->MODER |= (1u << GPIO_MODER_MODE15_Pos); } while(0u)
-#define TM_DIO_DATA()   (GPIOE->IDR & GPIO_IDR_ID15)
-#define TM_DIO_0()		do { GPIOE->BSRR |= GPIO_BSRR_BR15; } while(0u)
-#define TM_DIO_1()		do { GPIOE->BSRR |= GPIO_BSRR_BS15; } while(0u)
+#define TM_DIO_IN()       do { GPIOE->MODER &= ~GPIO_MODER_MODE15_Msk; } while(0u)
+#define TM_DIO_OUT()      do { GPIOE->MODER |= (1u << GPIO_MODER_MODE15_Pos); } while(0u)
+#define TM_DIO_DATA()     (GPIOE->IDR & GPIO_IDR_ID15)
+#define TM_DIO_0()        do { GPIOE->BSRR |= GPIO_BSRR_BR15; } while(0u)
+#define TM_DIO_1()        do { GPIOE->BSRR |= GPIO_BSRR_BS15; } while(0u)
+
 
 uint8_t tm_convToDigit(uint8_t ch) {
-	uint8_t ret;
-    if(true == (0x80u & ch)) {
+    uint8_t ret;
+    if(0u != (0x80u & ch)) {
         ch &= 0x7Fu;
         ret = 0x80u;
     } else {
         ret = 0u;
     }
-	switch(ch) {
-		case '0': ret |= 0x3Fu; break;
-		case '1': ret |= 0x06u; break;
-		case '2': ret |= 0x5Bu; break;
-		case '3': ret |= 0x4Fu; break;
-		case '4': ret |= 0x66u; break;
-		case '5': ret |= 0x6Du; break;
-		case '6': ret |= 0x7Du; break;
-		case '7': ret |= 0x07u; break;
-		case '8': ret |= 0x7Fu; break;
-		case '9': ret |= 0x6Fu; break;
-		case '-': ret |= 0x40u; break;
+    if(ch & 0x40u) {
+        ch &= 0xDF;
+    }
+    switch(ch) {
+        case '0': ret |= 0x3Fu; break;
+        case '1': ret |= 0x06u; break;
+        case 'Z':
+        case '2': ret |= 0x5Bu; break;
+        case '3': ret |= 0x4Fu; break;
+        case '4': ret |= 0x66u; break;
+        case 'S':
+        case '5': ret |= 0x6Du; break;
+        case '6': ret |= 0x7Du; break;
+        case '7': ret |= 0x07u; break;
+        case '8': ret |= 0x7Fu; break;
+        case 'G':
+        case '9': ret |= 0x6Fu; break;
+        case '-': ret |= 0x40u; break;
         case '.':
         case ',': ret |= 0x80u; break;
-        case ' ': ret = 0u;
-	//	case : ret = 0xu; break;
-		default: ret = 0x80u; break;
-	}
-	return ret;
+        case ' ': ret |= 0x00u; break;
+        case 'A': ret |= 0x77u; break;
+        case 'B': ret |= 0x7Cu; break;
+        case 'C': ret |= 0x58u; break;
+        case 'D': ret |= 0x5Eu; break;
+        case 'E': ret |= 0x79u; break;
+        case 'F': ret |= 0x71u; break;
+        case 'H': ret |= 0x76u; break;
+        case 'I': ret |= 0x04u; break;
+        case 'J': ret |= 0x1Fu; break;
+        case 'L': ret |= 0x38u; break;
+        case 'N': ret |= 0x54u; break;
+        case 'O': ret |= 0x5Cu; break;
+        case 'P': ret |= 0x73u; break;
+        case 'R': ret |= 0x50u; break;
+        case 'T': ret |= 0x78u; break;
+        case 'U': ret |= 0x3Eu; break;
+        case 'Y': ret |= 0x6Eu; break;
+        
+    //    case : ret = 0xu; break;
+        default: ret = 0x80u; break;
+    }
+    return ret;
 }
 
 void tm1638_show(uint8_t *buff) {
-	uint8_t i, j;
-	j = 0u;
-	for(i = 0u; i < 8u; i++) {
-		tm_data[j++] = tm_convToDigit(buff[i]);
-		tm_data[j++] = 0x01;	// led on
-	}
-    if(statusTl == TM1638_STATUS_TL_DONE) {
-        tm_sendBuffToShow();
-    } else {
-        tm_isDataToSend = true;
+    bool isDifferent;
+    uint8_t i, j, ch;
+    isDifferent = false;
+    j = 0u;
+    for(i = 0u; i < 8u; i++) {
+        ch = tm_convToDigit(buff[i]);
+        if(ch != tm_data[j]) {
+            tm_data[j++] = ch;
+            tm_data[j++] = 0x01;    // led on
+            isDifferent = true;
+        } else {
+            j += 2u;
+        }
+    }
+    if(true == isDifferent) {
+        if(statusTl == TM1638_STATUS_TL_DONE) {
+            tm_sendBuffToShow();
+        } else {
+            tm_isDataToSend = true;
+        }
     }
 }
 
@@ -86,10 +121,12 @@ void tm1638_showPos(uint8_t position, uint8_t ch) {
     if(TM1638_STATUS_TL_DONE == statusTl) {
         position = (position  * 2u) - 2u;
         ch = tm_convToDigit(ch);
-        tm_data[position] = ch;
-        tm1638_setAddress(position, false);
-        tm1638_sendData(ch);
-        TM_STB_1();
+        if(tm_data[position] != ch) {
+            tm_data[position] = ch;
+            tm1638_setAddress(position, false);
+            tm1638_sendData(ch);
+            TM_STB_1();
+        }
     } else {
         tm_savePosition = position;
         tm_saveChar = ch;
@@ -98,20 +135,20 @@ void tm1638_showPos(uint8_t position, uint8_t ch) {
 }
 
 void tm1638_setAddress(uint8_t address, bool stop) {
-	if(address < 0x10u) {
-		TM_STB_0();
-		tm1638_sendData(TM1638_SET_ADDRESS + address);
-		//tm1638_sendData(address);
-		if(true == stop) {
-			TM_STB_1();
-		}
-	}
+    if(address < 0x10u) {
+        TM_STB_0();
+        tm1638_sendData(TM1638_SET_ADDRESS + address);
+        //tm1638_sendData(address);
+        if(true == stop) {
+            TM_STB_1();
+        }
+    }
 }
 
 void tm1638_sendCommand(uint8_t comm) {
-	TM_STB_0();
-	tm1638_sendData(comm);
-	TM_STB_1();
+    TM_STB_0();
+    tm1638_sendData(comm);
+    TM_STB_1();
 }
 
 void tm1638_sendPacket(uint8_t *buff, uint8_t size) {
@@ -120,21 +157,21 @@ void tm1638_sendPacket(uint8_t *buff, uint8_t size) {
     for(i = 0u; i < size; i++) {
         tm1638_sendData(buff[i]);
     }
-	TM_STB_1();
+    TM_STB_1();
 }
 
 void tm1638_sendData(uint8_t data) {
-	uint8_t i;
-	for(i = 0u; i < 8u; i++) {
-		TM_CLK_0();
-		if(true == (data & 0x01u)) {
-			TM_DIO_1();
-		} else {
-			TM_DIO_0();
-		}
-		TM_CLK_1();
-		data >>= 1u;
-	}
+    uint8_t i;
+    for(i = 0u; i < 8u; i++) {
+        TM_CLK_0();
+        if(0u != (data & 0x01u)) {
+            TM_DIO_1();
+        } else {
+            TM_DIO_0();
+        }
+        TM_CLK_1();
+        data >>= 1u;
+    }
 }
 
 void tm1638_readTl(uint8_t *buff) {
@@ -158,59 +195,59 @@ void tm1638_readTl(uint8_t *buff) {
         buff[i] = ch;
     }
     TM_DIO_OUT();
-	TM_STB_1();
+    TM_STB_1();
     tm1638_sendCommand(TM1638_COMMAND_WRITE_DATA);
 }
 
 void tm1638_initPort(void) {
     statusTlCount = 0u;
-	GPIOE->MODER &= ~GPIO_MODER_MODE13_Msk;
-	GPIOE->MODER |= (1u << GPIO_MODER_MODE13_Pos);	// STB - output from uP
-	TM_STB_1();
+    GPIOE->MODER &= ~GPIO_MODER_MODE13_Msk;
+    GPIOE->MODER |= (1u << GPIO_MODER_MODE13_Pos);    // STB - output from uP
+    TM_STB_1();
 
-	GPIOE->MODER &= ~GPIO_MODER_MODE14_Msk;
-	GPIOE->MODER |= (1u << GPIO_MODER_MODE14_Pos);	// CLK - output from uP
-	TM_CLK_1();
+    GPIOE->MODER &= ~GPIO_MODER_MODE14_Msk;
+    GPIOE->MODER |= (1u << GPIO_MODER_MODE14_Pos);    // CLK - output from uP
+    TM_CLK_1();
 
-	TM_DIO_IN();
-	GPIOE->PUPDR &= ~(GPIO_PUPDR_PUPD15_Msk);
-	GPIOE->PUPDR |= (1u << GPIO_PUPDR_PUPD15_Pos);
-	GPIOE->OTYPER |= GPIO_OTYPER_OT15;
-	TM_DIO_OUT();									// DIO - input/output with open collector, pull up from uP
-	TM_DIO_1();
+    TM_DIO_IN();
+    GPIOE->PUPDR &= ~(GPIO_PUPDR_PUPD15_Msk);
+    GPIOE->PUPDR |= (1u << GPIO_PUPDR_PUPD15_Pos);
+    GPIOE->OTYPER |= GPIO_OTYPER_OT15;
+    TM_DIO_OUT();                                    // DIO - input/output with open collector, pull up from uP
+    TM_DIO_1();
 }
 
 void tm1638_init(void) {
-	uint8_t i;
+    uint8_t i;
     statusTl = TM1638_STATUS_TL_NOT_INIT;
     tm1638_initPort();
-	
-	tm1638_sendCommand(TM1638_COMMAND_WRITE_DATA);
-	tm1638_sendCommand(TM1638_COMMAND_LCD_ON_PULSE_1_16);
-	tm1638_setAddress(0u, false);
-	tm1638_sendData(0x01);
-	tm1638_sendData(0x01);
-	tm1638_sendData(0x02);
-	tm1638_sendData(0x02);
-	tm1638_sendData(0x04);
-	tm1638_sendData(0x04);
-	tm1638_sendData(0x08);
-	tm1638_sendData(0x08);
-	tm1638_sendData(0x10);
-	tm1638_sendData(0x10);
-	tm1638_sendData(0x20);
-	tm1638_sendData(0x20);
-	tm1638_sendData(0x40);
-	tm1638_sendData(0x40);
-	tm1638_sendData(0x80);
-	tm1638_sendData(0x80);
-	for(i = 0u; i < 16u; i++) {
-		tm1638_sendData(0xFFu);
-	}
-	for(i = 0u; i < 16u; i++) {
-		tm1638_sendData(0x00u);
-	}
-	TM_STB_1();
+    
+    tm1638_sendCommand(TM1638_COMMAND_WRITE_DATA);
+    tm1638_sendCommand(TM1638_COMMAND_LCD_ON_PULSE_1_16);
+    tm1638_setAddress(0u, false);
+    tm1638_sendData(0x01);
+    tm1638_sendData(0x01);
+    tm1638_sendData(0x02);
+    tm1638_sendData(0x02);
+    tm1638_sendData(0x04);
+    tm1638_sendData(0x04);
+    tm1638_sendData(0x08);
+    tm1638_sendData(0x08);
+    tm1638_sendData(0x10);
+    tm1638_sendData(0x10);
+    tm1638_sendData(0x20);
+    tm1638_sendData(0x20);
+    tm1638_sendData(0x40);
+    tm1638_sendData(0x40);
+    tm1638_sendData(0x80);
+    tm1638_sendData(0x80);
+    for(i = 0u; i < 16u; i++) {
+        tm1638_sendData(0xFFu);
+    }
+    for(i = 0u; i < 16u; i++) {
+        tm1638_sendData(0x00u);
+    }
+    TM_STB_1();
 }
 
 uint8_t tm1638_getTl(void) {
@@ -269,7 +306,7 @@ TM1638_status_tl TM1638_handleTaskTl(void) {
             for(i = 0u; i < 8u; i++) {
                 TM_CLK_0();
                 ch >>= 1u;
-                pin = TM_DIO_DATA();
+                pin = (0u != TM_DIO_DATA());
                 TM_CLK_1();
                 if(true == pin) {
                     ch |= 0x80u;

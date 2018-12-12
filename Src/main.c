@@ -25,9 +25,9 @@ uint8_t charsToHex(uint8_t ch1, uint8_t ch2);
 void charToHexString(uint8_t* buff, uint8_t ch);
 void run_in_ram(void);
 void load_ramcode(void);
-extern char Image$$RW_CODE$$Base;		// kvoli testovaniu volania funkcie z RAM
+extern char Image$$RW_CODE$$Base;        // kvoli testovaniu volania funkcie z RAM
 extern char Image$$RW_CODE$$Length; // kvoli testovaniu volania funkcie z RAM
-extern char Load$$RW_CODE$$Base;		// kvoli testovaniu volania funkcie z RAM
+extern char Load$$RW_CODE$$Base;        // kvoli testovaniu volania funkcie z RAM
 __attribute__((section("TEMPDATASECTION"), zero_init)) uint8_t foo;
 
 uint8_t charsToHex(uint8_t ch1, uint8_t ch2) {
@@ -71,12 +71,13 @@ static uint8_t receiveP = 0;
 int main(void) {
     bool tm_show = false;
     bool lcdIsShift;
-	bool cdNewData = false;
+    bool cdNewData = false;
     uint8_t i, j, ch;
-	uint8_t buff[50];
+    uint8_t buff[50];
     uint8_t cd_buff[300];
     uint32_t count = 0;
     uint8_t stredTmp = 0;
+    uint8_t tlBuff[9] = {0xFF, '0', '0', '0', '0', '0', '0', '0', '0'};
 
     /**** AUDIO - CS43L22 - U13 ****/
     RCC->AHB2ENR |= RCC_AHB2ENR_GPIOBEN;     // enable clock for GPIOB
@@ -97,8 +98,8 @@ int main(void) {
     GPIOE->PUPDR |= ((1u << GPIO_PUPDR_PUPD9_Pos) & (1u << GPIO_PUPDR_PUPD7_Pos)); // Pull-up PE7 and PE9
     RCC->AHB2ENR &= ~(RCC_AHB2ENR_GPIOEEN);   /* disable clock for GPIOE */
     
-	SPu1_init();
-	
+    SPu1_init();
+    
     load_ramcode();
     tl_Init();
     TIM_delayInit();
@@ -109,14 +110,14 @@ int main(void) {
     SP_init();
     
     mfx_initForced();
-	tm1638_init();
-	tm1638_show((uint8_t*)"98765432");
-	tm1638_showPos(4u, '0');
+    tm1638_init();
+    tm1638_show((uint8_t*)"98765432");
+    tm1638_showPos(4u, '0');
 
     count = 0u;
 
     //LCD_GLASS_DisplayString((uint8_t *)"A");
-    /*	LCD_GLASS_DisplayString(data);
+    /*    LCD_GLASS_DisplayString(data);
     lcdRam1 = (uint64_t*) &LCD->RAM[0];
     lcdRam2 = (uint64_t*) &LCD->RAM[2];
     lcdRam3 = (uint64_t*) &LCD->RAM[4];
@@ -127,12 +128,12 @@ int main(void) {
     sprintf((char*)buff, "%06d", count);
     LCD_GLASS_DisplayString(buff);
     if(tl_getTl().stred) {
-		i = 0u;
-		for(ch = ('a'-1U); ch < ('z'+1u); ch++) {
-			buff[i++] = ch;
-		}
-		buff[i] = '\0';
-		LCD_GLASS_DisplayString(buff);
+        i = 0u;
+        for(ch = ('a'-1U); ch < ('z'+1u); ch++) {
+            buff[i++] = ch;
+        }
+        buff[i] = '\0';
+        LCD_GLASS_DisplayString(buff);
     }
     while(1) {
         TIM_handleTask();
@@ -168,7 +169,7 @@ int main(void) {
                     (void)SP_sendBuff(&receiveBuff[4], 8u);
                 }
                 receiveP = 0u;
-                
+                TIM_delaySetTimer(DELAY_TM1638, 3000u);
             } else {
                 receiveBuff[receiveP++] = ch;
             }
@@ -212,40 +213,48 @@ int main(void) {
             LCD_GLASS_DisplayString(buff);
         }
 
-		if(tl_getTlSample().hore) {
-			//led1_on();
-			foo++;
-			CD_sendToDiarConst(0u);
+        if(tl_getTlSample().hore) {
+            //led1_on();
+            foo++;
+            CD_sendToDiarConst(0u);
+            TIM_delaySetTimer(DELAY_TM1638, 3000u);
+            tm1638_show("abcdEFGH");
             //run_in_ram();
             
-		} else {
-			//led1_off();
-		}
+        } else {
+            //led1_off();
+        }
         if(tl_getTlSample().lavo) {
             myRtcGetTime((uint8_t *)buff);
             sprintf((char*)&buff[6], "-%06d", ++count);
             CD_sendToDiarConst((uint8_t *)buff);
-		}
+        }
         if(tl_getTlSample().pravo) {
             //CD_sendToDiarConst(testDiar);
             (void)CD_receive();
-		}
+            TIM_delaySetTimer(DELAY_TM1638, 3000u);
+            tm1638_show("456789-.");
+        }
         if(tl_getTl().dole) {
-			CD_senToDiarEndCommunication();
+            CD_senToDiarEndCommunication();
             LCD_GLASS_DisplayString(testDiar);
-			mfx_iddReqMeas(10u);
-		} else {
-		}
-		if(tl_getTl().stred) {
-			stredTmp = 1;
-			sprintf((char*)buff, "%06d", ++count);
-			LCD_GLASS_DisplayString((uint8_t*) buff);
-		} else if (stredTmp) {
-			if(USART2->ISR & USART_ISR_TXE) {
-				stredTmp = 0;
-				printf("Count: %d", count);
-			}
-		}
+            mfx_iddReqMeas(10u);
+            TIM_delaySetTimer(DELAY_TM1638, 3000u);
+            tm1638_show("ijlnOPRS");
+        } else {
+        }
+        if(tl_getTl().stred) {
+            stredTmp = 1;
+            sprintf((char*)buff, "%06d", ++count);
+            LCD_GLASS_DisplayString((uint8_t*) buff);
+            TIM_delaySetTimer(DELAY_TM1638, 3000u);
+            tm1638_show("tuYZ0123");
+        } else if (stredTmp) {
+            if(USART2->ISR & USART_ISR_TXE) {
+                stredTmp = 0;
+                printf("Count: %d", count);
+            }
+        }
 
         (void)BMP180_handleTask();
         if(true == BMP180_isPresent()) {
@@ -268,40 +277,48 @@ int main(void) {
             }
         }
         if(TM1638_STATUS_TL_DONE == TM1638_handleTaskTl()) {
-            if(true == tm_show) {
-                tm_show = false;
-                ch = tm1638_getTl();
-                for(i = 1u; i < 9u; i++) {
-                    if(ch & 0x80u) {
-                        j = '1';
-                    } else {
-                        j = '0';
-                    }
-                    ch <<= 1u;
-                    tm1638_showPos(i, j);
+            if(TIM_delayIsTimerDown(DELAY_TM1638) == true) {
+                if(true == tm_show) {
+                    tm_show = false;
+                    ch = tm1638_getTl();
+                    //if(tlBuff[0] != ch) { // ak chcem inkrementovat len pri stlaceni tlacidla. Inak to inkrementuje periodicky
+                        tlBuff[0] = ch;
+                        TIM_delaySetTimer(DELAY_TM1638, 100u);
+                        for(i = 1u; i < 9u; i++) {
+                            if(ch & 0x80u) {
+                                tlBuff[i]++;
+                                if(('9' | 0x80u) < tlBuff[i]) {
+                                    tlBuff[i] = '0';
+                                } else if(('9' < tlBuff[i]) && (0u == (tlBuff[i] & 0x80u))) {
+                                    tlBuff[i] = '0' | 0x80u;
+                                }
+                            }
+                            ch <<= 1u;
+                        }
+                        tm1638_show(&tlBuff[1]);
+                    //}
                 }
             }
         } else {
             tm_show = true;
         }
-        
-	} // while(1);
+    }
 }
 
 // kvoli testovaniu volania funkcie z RAM
 __attribute__((section("RAMCODESECTION"))) void run_in_ram(void) {
   __nop();
-	foo++;
-	led1_on();
+    foo++;
+    led1_on();
 }
 
 // kvoli testovaniu volania funkcie z RAM
 void load_ramcode(void) {
-	uint32_t i;
-	char *from, *to;
-	to = &Image$$RW_CODE$$Base;
-	from = &Load$$RW_CODE$$Base;
-	for(i = 0; i < (size_t)&Image$$RW_CODE$$Length; i++) {
-		to[i] = from[i];
-	}
+    uint32_t i;
+    char *from, *to;
+    to = &Image$$RW_CODE$$Base;
+    from = &Load$$RW_CODE$$Base;
+    for(i = 0; i < (size_t)&Image$$RW_CODE$$Length; i++) {
+        to[i] = from[i];
+    }
 }
