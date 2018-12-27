@@ -373,5 +373,5 @@ void HI2Cmfx_setChipAddress(uint8_t chipAddress) {
 }
 
 bool HI2Cmfx_getChipAddress(void) {
-	return HI2Cmfx_isChippresent;
+    return HI2Cmfx_isChippresent;
 }

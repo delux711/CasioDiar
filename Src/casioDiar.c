@@ -5,13 +5,13 @@
 #include "getJoystick.h"
 #include <stdio.h>
 
-#define CD_TIMEOUT_DEF      (30000u)
-#define CD_MAX_NOT_ANSWERE  (5u)
-#define CD_HEADER_SIZE      (15u)
+#define CD_TIMEOUT_DEF               (30000u)
+#define CD_MAX_NOT_ANSWERE           (5u)
+#define CD_HEADER_SIZE               (15u)
 #define CD_BUFF_PACKET_LENGTH_DATA   (0u)
 #define CD_BUFF_PACKET_FIELD_DATA    (1u)
 #define CD_BUFF_PACKET_FIELD_TYPE    (3u)
-#define CD_BUFF_PACKET_DATA (4u)
+#define CD_BUFF_PACKET_DATA          (4u)
 
 #define CD_PACKET_FIELD_DATA_TYPE               (0x00u) // 0x0X
 #define CD_PACKET_FIELD_DATA_TEXT               (0x80u) // 0x8X
@@ -640,7 +640,7 @@ bool bIsReceivedCharacter(uint8_t ch) {
 }
 
 uint8_t *CD_getBuffer(void) {
-//	SPu1_sendChar(0x23u);
+    //SPu1_sendChar(0x23u);
     return &cd_buffToSendBuff[CD_BUFF_PACKET_DATA];
 }
 
