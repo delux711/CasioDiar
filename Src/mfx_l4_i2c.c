@@ -83,8 +83,7 @@ bool HI2Cmfx_bGetSDA(void) {
 }
 
 
-void HI2Cmfx_vBitDelayH(void)
-{
+void HI2Cmfx_vBitDelayH(void) {
    /** \todo Delay must be adjusted to get not more than 400Khz */
    __asm("NOP"); 
    __asm("NOP"); 
@@ -94,8 +93,7 @@ void HI2Cmfx_vBitDelayH(void)
    __asm("NOP"); 
 }
 
-void HI2Cmfx_vBitDelayL(void)
-{
+void HI2Cmfx_vBitDelayL(void) {
    /** \todo Delay must be adjusted to get not more than 400Khz */
    __asm("NOP"); 
    __asm("NOP"); 
@@ -107,15 +105,13 @@ void HI2Cmfx_vBitDelayL(void)
 
 /* for 100kHz mode this function has to wait at least 5 µsec - overhead for call/return  */
 /* for 400kHz mode this function has to wait at least 1.10 µsec - overhead for call/return */
-void HI2Cmfx_vBitDly(void)
-{
+void HI2Cmfx_vBitDly(void) {
    /* use HSUP_vDelay(10); for 100 kHz mode */
    /* use nothing for 400 kHz mode */
 }
 
 /* event handler */
-void HI2Cmfx_vHandleEvent(void)
-{
+void HI2Cmfx_vHandleEvent(void) {
 
 }
 
@@ -334,7 +330,7 @@ uint8_t HI2Cmfx_readByte(uint8_t addr, bool stop) {
     uint8_t ret;
     ret = 0u;
     if(true == HI2Cmfx_writeAddr(addr, true)) {
-        if(true == HI2Cmfx_bSetAddr(HI2Cmfx_chipAddr & 0x01u)) { // read
+        if(true == HI2Cmfx_bSetAddr(HI2Cmfx_chipAddr | 0x01u)) { // read
             ret = HI2Cmfx_vTriggerReceive(stop);
         }
     }

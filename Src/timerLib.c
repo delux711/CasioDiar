@@ -1,7 +1,7 @@
 #include "timerLib.h"
 
 static uint16_t timersBuff[DELAY_TIMER_END];
-static uint16_t tim_event = 0u;
+static volatile uint16_t tim_event = 0u;
 
 void TIM2_IRQHandler() {
     TIM2->SR &= (~TIM_SR_UIF_Msk);
@@ -15,7 +15,7 @@ void TIM_delayInit(void) {
     TIM2->CR1 |= TIM_CR1_DIR_Msk;
     TIM2->PSC = (TIM_FREQ_IN - 1u);
     //TIM2->ARR = 1025;
-    TIM2->ARR = 1000;
+    TIM2->ARR = 1000u;
     TIM2->EGR |= TIM_EGR_UG_Msk;
     TIM2->SR = 0u;
     TIM2->DIER |= TIM_DIER_UIE_Msk;
@@ -23,8 +23,9 @@ void TIM_delayInit(void) {
         timersBuff[i] = 0u;
     }
     TIM2->CR1 |= TIM_CR1_CEN_Msk;
-    tim_event = 0u;
+    TIM2->SR &= (~TIM_SR_UIF_Msk);
     NVIC_EnableIRQ(TIM2_IRQn);
+    tim_event = 0u;
 }
 
 uint16_t TIM_delayGetTime(TIM_EN_delayTimers dt) {
@@ -41,7 +42,7 @@ bool TIM_delayIsTimerDown(TIM_EN_delayTimers dt) {
 }
 
 void TIM_delaySetTimer(TIM_EN_delayTimers dt, uint16_t msTime) {
-    timersBuff[dt] = msTime + 1u;
+    timersBuff[dt] = (tim_event + msTime + 1u);
 }
 
 void TIM_handleTask(void) {

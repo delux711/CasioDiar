@@ -44,10 +44,10 @@ void tl_Init(void) {
     GPIOE->MODER |= (1U << GPIO_MODER_MODE8_Pos);
     HDIO_testPinInit();
 /*
-  GPIOC->MODER   &= ~(3U << 2* 13);
-  GPIOC->OSPEEDR &= ~(3U << 2* 13);
-  GPIOC->OSPEEDR |=  (1U << 2* 13);
-  GPIOC->PUPDR   &= ~(3U << 2* 13);*/
+    GPIOC->MODER   &= ~(3U << 2* 13);
+    GPIOC->OSPEEDR &= ~(3U << 2* 13);
+    GPIOC->OSPEEDR |=  (1U << 2* 13);
+    GPIOC->PUPDR   &= ~(3U << 2* 13);*/
 }
 /*
 typedef enum _TL_ENU {

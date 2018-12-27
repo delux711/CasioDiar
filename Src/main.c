@@ -79,8 +79,11 @@ int main(void) {
     uint8_t stredTmp = 0;
     uint8_t tlBuff[9] = {0xFF, '0', '0', '0', '0', '0', '0', '0', '0'};
 
+    MX_LCD_Init();
+    myRtcInit();
+    TIM_delayInit();
     /**** AUDIO - CS43L22 - U13 ****/
-    RCC->AHB2ENR |= RCC_AHB2ENR_GPIOBEN;     // enable clock for GPIOB
+    RCC->AHB2ENR |= (RCC_AHB2ENR_GPIOBEN | RCC_AHB2ENR_GPIOEEN);     // enable clock for GPIOB
     //GPIOB->MODER &= ~(GPIO_MODER_MODE6 | GPIO_MODER_MODE7);           // PB6 and PB7 to INPUT mode
     //GPIOB->OTYPER |= (uint32_t)(GPIO_OTYPER_OT6 | GPIO_OTYPER_OT7);   // PB6 and PB7 to open-drain
     GPIOB->PUPDR |= ((1u << GPIO_PUPDR_PUPD6_Pos) & (1u << GPIO_PUPDR_PUPD7_Pos)); // Pull-up enable
@@ -93,27 +96,28 @@ int main(void) {
     GPIOE->ODR &= ~(GPIO_ODR_OD3);           // PE3 to log 0
     GPIOE->PUPDR |= ((2u << GPIO_PUPDR_PUPD2_Pos) & (2u << GPIO_PUPDR_PUPD4_Pos) & // PE2, PE4, PE5 and PE6
                      (2u << GPIO_PUPDR_PUPD5_Pos) & (2u << GPIO_PUPDR_PUPD6_Pos)); // Pull-down enable
+
     /**** Microphone - MP34DT01 - U17****/
     //PE9->AUDIO_CLK, PE7->AUDIO_DIN (AUDIO_DIN has HI impedance if AUDIO_CLK is UP)
     GPIOE->PUPDR |= ((1u << GPIO_PUPDR_PUPD9_Pos) & (1u << GPIO_PUPDR_PUPD7_Pos)); // Pull-up PE7 and PE9
-    RCC->AHB2ENR &= ~(RCC_AHB2ENR_GPIOEEN);   /* disable clock for GPIOE */
-    
+    RCC->AHB2ENR &= ~(RCC_AHB2ENR_GPIOEEN);   // disable clock for GPIOE
+
     SPu1_init();
     
     load_ramcode();
     tl_Init();
-    TIM_delayInit();
-    MX_LCD_Init();
     LCD_GLASS_Clear();
-    myRtcInit();
     RCC->CFGR |= (4u << RCC_CFGR_MCOPRE_Pos); // MCO / 16 IF 4
     SP_init();
     
-    mfx_initForced();
     tm1638_init();
     tm1638_show((uint8_t*)"98765432");
     tm1638_showPos(4u, '0');
 
+    count = 0u;
+    while((false == mfx_initForced()) && (count < 100u)) {
+        count++;
+    }
     count = 0u;
 
     //LCD_GLASS_DisplayString((uint8_t *)"A");
@@ -228,6 +232,7 @@ int main(void) {
             myRtcGetTime((uint8_t *)buff);
             sprintf((char*)&buff[6], "-%06d", ++count);
             CD_sendToDiarConst((uint8_t *)buff);
+            mfx_iddReqMeas(10u);
         }
         if(tl_getTlSample().pravo) {
             //CD_sendToDiarConst(testDiar);
@@ -238,7 +243,6 @@ int main(void) {
         if(tl_getTl().dole) {
             CD_senToDiarEndCommunication();
             LCD_GLASS_DisplayString(testDiar);
-            mfx_iddReqMeas(10u);
             TIM_delaySetTimer(DELAY_TM1638, 3000u);
             tm1638_show("ijlnOPRS");
         } else {
@@ -301,6 +305,12 @@ int main(void) {
             }
         } else {
             tm_show = true;
+        }
+        if(MFX_STATUS_DONE == mfx_handleTask()) {
+            TIM_delaySetTimer(DELAY_MAIN_LCD_SHOW, 2500u);
+            //sprintf((char*)buff, "%ld", (int32_t)mfx_getData());
+            mfx_convertToChar(buff, mfx_getData());
+            LCD_GLASS_DisplayString((uint8_t*) buff);
         }
     }
 }

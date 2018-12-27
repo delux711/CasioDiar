@@ -17,18 +17,24 @@ void tm1638_setAddress(uint8_t address, bool stop);
 uint8_t tm_convToDigit(uint8_t ch);
 void tm_sendBuffToShow(void);
 
+#define TM_STB_0_MAP(PORT,PIN)      do { GPIO##PORT->BSRR |= GPIO_BSRR_BR##PIN; } while(0u)
+#define TM_STB_1_MAP(PORT,PIN)      do { GPIO##PORT->BSRR |= GPIO_BSRR_BS##PIN; } while(0u)
+#define TM_STB_OUT_MAP(PORT,PIN)    do { GPIO##PORT->MODER &= ~GPIO_MODER_MODE##PIN##_Msk; \
+                                       GPIO##PORT->MODER |= (1u << GPIO_MODER_MODE##PIN##_Pos); } while(0) // STB - output from uP
 
-#define TM_STB_0()    do { GPIOE->BSRR |= GPIO_BSRR_BR13; } while(0u)
-#define TM_STB_1()    do { GPIOE->BSRR |= GPIO_BSRR_BS13; } while(0u)
+#define TM_CLK_0_MAP(PORT,PIN)      do { GPIO##PORT->BSRR |= GPIO_BSRR_BR##PIN; } while(0u)
+#define TM_CLK_1_MAP(PORT,PIN)      do { GPIO##PORT->BSRR |= GPIO_BSRR_BS##PIN; } while(0u)
+#define TM_CLK_OUT_MAP(PORT,PIN)    do { GPIO##PORT->MODER &= ~GPIO_MODER_MODE##PIN##_Msk; \
+                                       GPIO##PORT->MODER |= (1u << GPIO_MODER_MODE##PIN##_Pos); } while(0)// CLK - output from uP
 
-#define TM_CLK_0()    do { GPIOE->BSRR |= GPIO_BSRR_BR14; } while(0u)
-#define TM_CLK_1()    do { GPIOE->BSRR |= GPIO_BSRR_BS14; } while(0u)
-
-#define TM_DIO_IN()       do { GPIOE->MODER &= ~GPIO_MODER_MODE15_Msk; } while(0u)
-#define TM_DIO_OUT()      do { GPIOE->MODER |= (1u << GPIO_MODER_MODE15_Pos); } while(0u)
-#define TM_DIO_DATA()     (GPIOE->IDR & GPIO_IDR_ID15)
-#define TM_DIO_0()        do { GPIOE->BSRR |= GPIO_BSRR_BR15; } while(0u)
-#define TM_DIO_1()        do { GPIOE->BSRR |= GPIO_BSRR_BS15; } while(0u)
+#define TM_DIO_CONFIG_MAP(PORT,PIN) do { GPIO##PORT->PUPDR &= ~(GPIO_PUPDR_PUPD##PIN##_Msk);      \
+                                         GPIO##PORT->PUPDR |= (1u << GPIO_PUPDR_PUPD##PIN##_Pos); \
+                                         GPIO##PORT->OTYPER |= GPIO_OTYPER_OT##PIN; } while(0) // DIO-PULL UP and OPEN collector
+#define TM_DIO_IN_MAP(PORT,PIN)     do { GPIO##PORT->MODER &= ~GPIO_MODER_MODE##PIN##_Msk; } while(0u)
+#define TM_DIO_OUT_MAP(PORT,PIN)    do { GPIO##PORT->MODER |= (1u << GPIO_MODER_MODE##PIN##_Pos); } while(0u)
+#define TM_DIO_DATA_MAP(PORT,PIN)   (0u != (GPIO##PORT->IDR & GPIO_IDR_ID##PIN))
+#define TM_DIO_0_MAP(PORT,PIN)      do { GPIO##PORT->BSRR |= GPIO_BSRR_BR##PIN; } while(0u)
+#define TM_DIO_1_MAP(PORT,PIN)      do { GPIO##PORT->BSRR |= GPIO_BSRR_BS##PIN; } while(0u)
 
 
 uint8_t tm_convToDigit(uint8_t ch) {
@@ -201,18 +207,14 @@ void tm1638_readTl(uint8_t *buff) {
 
 void tm1638_initPort(void) {
     statusTlCount = 0u;
-    GPIOE->MODER &= ~GPIO_MODER_MODE13_Msk;
-    GPIOE->MODER |= (1u << GPIO_MODER_MODE13_Pos);    // STB - output from uP
+    TM_STB_OUT();
     TM_STB_1();
 
-    GPIOE->MODER &= ~GPIO_MODER_MODE14_Msk;
-    GPIOE->MODER |= (1u << GPIO_MODER_MODE14_Pos);    // CLK - output from uP
+    TM_CLK_OUT();
     TM_CLK_1();
 
     TM_DIO_IN();
-    GPIOE->PUPDR &= ~(GPIO_PUPDR_PUPD15_Msk);
-    GPIOE->PUPDR |= (1u << GPIO_PUPDR_PUPD15_Pos);
-    GPIOE->OTYPER |= GPIO_OTYPER_OT15;
+    TM_DIO_CONFIG();
     TM_DIO_OUT();                                    // DIO - input/output with open collector, pull up from uP
     TM_DIO_1();
 }
@@ -306,7 +308,7 @@ TM1638_status_tl TM1638_handleTaskTl(void) {
             for(i = 0u; i < 8u; i++) {
                 TM_CLK_0();
                 ch >>= 1u;
-                pin = (0u != TM_DIO_DATA());
+                pin = TM_DIO_DATA();
                 TM_CLK_1();
                 if(true == pin) {
                     ch |= 0x80u;

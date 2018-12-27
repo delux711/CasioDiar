@@ -4,6 +4,24 @@
 #include <stdbool.h>
 #include "stm32l4xx.h"
 
+/* This pin is output */
+#define TM_STB_OUT()     TM_STB_OUT_MAP(E,13)
+#define TM_STB_0()       TM_STB_0_MAP(E,13)
+#define TM_STB_1()       TM_STB_1_MAP(E,13)
+
+/* This pin is output */
+#define TM_CLK_OUT()     TM_CLK_OUT_MAP(E,14)
+#define TM_CLK_0()       TM_CLK_0_MAP(E,14)
+#define TM_CLK_1()       TM_CLK_1_MAP(E,14)
+
+/* This pin is output/input with internal pull up resistor and open collector */
+#define TM_DIO_CONFIG()  TM_DIO_CONFIG_MAP(E,15)
+#define TM_DIO_IN()      TM_DIO_IN_MAP(E,15)
+#define TM_DIO_OUT()     TM_DIO_OUT_MAP(E,15)
+#define TM_DIO_DATA()    TM_DIO_DATA_MAP(E,15)
+#define TM_DIO_0()       TM_DIO_0_MAP(E,15)
+#define TM_DIO_1()       TM_DIO_1_MAP(E,15)
+
 /*
   Byte0        Byte1  Byte2 Byte3 Byte4 Byte5 Byte6 Byte7 Byte8 Byte9 Byte10 Byte11 Byte12 Byte13 Byte14 Byte15
   Seg1         Led1   Seg2  Led2  Seg3  Led3  Seg4  Led4  Seg5  Led5  Seg6   Led6   Seg7   Led7   Seg8   Led8
