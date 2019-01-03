@@ -11,7 +11,7 @@
 #include <stdbool.h>
 #include "BMP180_pressure.h"
 #include "mfx_l4.h"
-#include "tm1638.h"
+#include "tm1638_modes.h"
 
 // SYSCLK - 4MHz
 // MSI - 4MHz
@@ -29,8 +29,6 @@ extern char Image$$RW_CODE$$Base;        // kvoli testovaniu volania funkcie z R
 extern char Image$$RW_CODE$$Length; // kvoli testovaniu volania funkcie z RAM
 extern char Load$$RW_CODE$$Base;        // kvoli testovaniu volania funkcie z RAM
 __attribute__((section("TEMPDATASECTION"), zero_init)) uint8_t foo;
-uint8_t tlBuff[9];
-void main_initTlBuff(void);
 
 uint8_t charsToHex(uint8_t ch1, uint8_t ch2) {
     uint8_t i, j, ch;
@@ -61,18 +59,6 @@ void charToHexString(uint8_t* buff, uint8_t ch) {
     }
 }
 
-void main_initTlBuff(void) {
-    uint8_t i;
-    //uint8_t tlBuff[9] = {0xFF, '0', '0', '0', '0', '0', '0', '0', '0'};
-    //tlBuff[] = {0xFF, (uint8_t)('0' | 0x80u), '0', '0', '0', '0', '0', '0', (uint8_t)('0' | 0x80u)};
-    for(i = 1u; i < 9u; i++) {
-        tlBuff[i] = '0';
-    }
-    tlBuff[0] = 0xFFu;
-    tlBuff[1] |= 0x80u;
-    tlBuff[8] |= 0x80u;
-}
-
 /*
 static uint64_t *lcdRam1;
 static uint64_t *lcdRam2;
@@ -83,10 +69,8 @@ static uint8_t testDiar[] = { "Ing.Pavol Pusztai, Slovinska 1, 05342 Krompachy."
 static uint8_t receiveBuff[50];
 static uint8_t receiveP = 0;
 int main(void) {
-    bool tm_show = false;
     bool lcdIsShift;
     bool cdNewData = false;
-    bool tmModeNumber = false;
     uint8_t i, j, ch;
     uint8_t buff[50];
     uint8_t cd_buff[300];
@@ -123,11 +107,6 @@ int main(void) {
     LCD_GLASS_Clear();
     RCC->CFGR |= (4u << RCC_CFGR_MCOPRE_Pos); // MCO / 16 IF 4
     SP_init();
-
-    tm1638_init();
-    tm1638_show((uint8_t*)"98765432");
-    tm1638_showPos(4u, '0');
-    main_initTlBuff();
 
     count = 0u;
     while((false == mfx_initForced()) && (count < 100u)) {
@@ -295,80 +274,7 @@ int main(void) {
                 LCD_GLASS_DisplayString((uint8_t*) buff);
             }
         }
-        if(TM1638_STATUS_TL_DONE == TM1638_handleTaskTl()) {
-            if(TIM_delayIsTimerDown(DELAY_TM1638) == true) {
-                if(true == tm_show) {
-                    tm_show = false;
-                    ch = tm1638_getTl();
-                    TIM_delaySetTimer(DELAY_TM1638, 100u);
-                    if(false == tmModeNumber) {
-                        if(0u != ch) {
-                            for(i = 1u; i < 9u; i++) {
-                                if(ch & 0x80u) {
-                                    tlBuff[i]++;
-                                    if(('9' | 0x80u) < tlBuff[i]) {
-                                        tlBuff[i] = '0';
-                                    } else if(('9' < tlBuff[i]) && (0u == (tlBuff[i] & 0x80u))) {
-                                        tlBuff[i] = '0' | 0x80u;
-                                    }
-                                }
-                                ch <<= 1u;
-                            }
-                            tm1638_show(&tlBuff[1]);
-                            if(('9' < tlBuff[1]) && ('9' < tlBuff[8]) && ('1' == tlBuff[2])) {
-                                ch = 0u;
-                                for(i = 3u; i < 8u; i++) {
-                                    ch += (tlBuff[i] - '0');
-                                }
-                                if(0u == ch) {
-                                    tmModeNumber = true;
-                                    tlBuff[0] = 1u;
-                                    TIM_delaySetTimer(DELAY_TM1638_BLINK, 500u);
-                                    for(i = 1u; i < 9u; i++) {
-                                        tlBuff[i] = '-';
-                                    }
-                                    tm1638_show(&tlBuff[1]);
-                                }
-                            }
-                        }
-                    } else {
-                        if(0u != ch) {
-                            for(i = 0u; i < 8u; i++) {
-                                if(0u != (ch & 0x80u)) {
-                                    i++;
-                                    tlBuff[0] &= 0x7Fu;
-                                    tlBuff[tlBuff[0]] = (i + '0');
-                                    tlBuff[0]++;
-                                    if(8u < tlBuff[0]) {
-                                        tlBuff[0] = 1u;
-                                    }
-                                    tm1638_show(&tlBuff[1]);
-                                    break;
-                                }
-                                ch <<= 1u;
-                            }
-                            if(('8' == tlBuff[1]) && ('8' == tlBuff[8]) && ('2' == tlBuff[2])) {
-                                main_initTlBuff();
-                                tmModeNumber = false;
-                                tm1638_show(&tlBuff[1]);
-                            }
-                        }
-                        if(true == TIM_delayIsTimerDown(DELAY_TM1638_BLINK)) {
-                            TIM_delaySetTimer(DELAY_TM1638_BLINK, 500u);
-                            if(0u == (0x80u & tlBuff[0])) {
-                                tm1638_showPos(tlBuff[0], tlBuff[tlBuff[0]]);
-                                tlBuff[0] |= 0x80u;
-                            } else {
-                                tlBuff[0] &= 0x7Fu;
-                                tm1638_showPos(tlBuff[0], ' ');
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            tm_show = true;
-        }
+        TMM_handleTask();
         if(MFX_STATUS_DONE == mfx_handleTask()) {
             TIM_delaySetTimer(DELAY_MAIN_LCD_SHOW, 2500u);
             //sprintf((char*)buff, "%ld", (int32_t)mfx_getData());
