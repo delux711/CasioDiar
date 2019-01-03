@@ -446,6 +446,11 @@
               <FileType>1</FileType>
               <FilePath>.\Src\tm1638.c</FilePath>
             </File>
+            <File>
+              <FileName>tm1638_modes.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Src\tm1638_modes.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -510,6 +515,11 @@
               <FileName>tm1638.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\Inc\tm1638.h</FilePath>
+            </File>
+            <File>
+              <FileName>tm1638_modes.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Inc\tm1638_modes.h</FilePath>
             </File>
           </Files>
         </Group>

@@ -78,6 +78,7 @@ typedef enum _TM1638_status_tl {
 
 extern TM1638_status_tl TM1638_handleTaskTl(void);
 extern uint8_t tm1638_getTl(void);
+extern void tm1638_showLed(uint8_t led);
 extern void tm1638_init(void);
 extern void tm1638_sendCommand(uint8_t comm);
 extern void tm1638_sendPacket(uint8_t *buff, uint8_t size);

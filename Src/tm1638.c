@@ -4,7 +4,7 @@ static bool tm_isDataToSend = false;
 static bool tm_isPositionToSend = false;
 static uint8_t tm_savePosition;
 static uint8_t tm_saveChar;
-static uint8_t tm_data[14];
+static uint8_t tm_data[16];
 static TM1638_status_tl statusTl = TM1638_STATUS_TL_NOT_INIT;
 static uint8_t statusTlCount;
 static uint8_t statusTlBuff[4];
@@ -16,6 +16,7 @@ void tm1638_sendData(uint8_t data);
 void tm1638_setAddress(uint8_t address, bool stop);
 uint8_t tm_convToDigit(uint8_t ch);
 void tm_sendBuffToShow(void);
+void tm1638_showToSend(bool isDifferent);
 
 #define TM_STB_0_MAP(PORT,PIN)      do { GPIO##PORT->BSRR |= GPIO_BSRR_BR##PIN; } while(0u)
 #define TM_STB_1_MAP(PORT,PIN)      do { GPIO##PORT->BSRR |= GPIO_BSRR_BS##PIN; } while(0u)
@@ -90,6 +91,27 @@ uint8_t tm_convToDigit(uint8_t ch) {
     return ret;
 }
 
+void tm1638_showLed(uint8_t led) {
+    bool isDifferent;
+    uint8_t i, j, temp;
+    isDifferent = false;
+    j = 1u;
+    for(i = 0u; i < 8u; i++) {
+        if(0u != (0x80u & led)) {
+            temp = 0x01u;
+        } else {
+            temp = 0u;
+        }
+        if(temp != tm_data[j]) {
+            tm_data[j] = temp;
+            isDifferent = true;
+        }
+        j += 2u;
+        led <<= 1u;
+    }
+    tm1638_showToSend(isDifferent);
+}
+
 void tm1638_show(uint8_t *buff) {
     bool isDifferent;
     uint8_t i, j, ch;
@@ -98,13 +120,18 @@ void tm1638_show(uint8_t *buff) {
     for(i = 0u; i < 8u; i++) {
         ch = tm_convToDigit(buff[i]);
         if(ch != tm_data[j]) {
-            tm_data[j++] = ch;
-            tm_data[j++] = 0x01;    // led on
+            tm_data[j] = ch;
+            j += 2u;
+            //tm_data[j++] = 0x01;    // led on
             isDifferent = true;
         } else {
             j += 2u;
         }
     }
+    tm1638_showToSend(isDifferent);
+}
+
+void tm1638_showToSend(bool isDifferent) {
     if(true == isDifferent) {
         if(statusTl == TM1638_STATUS_TL_DONE) {
             tm_sendBuffToShow();
