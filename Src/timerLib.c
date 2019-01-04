@@ -42,7 +42,10 @@ bool TIM_delayIsTimerDown(TIM_EN_delayTimers dt) {
 }
 
 void TIM_delaySetTimer(TIM_EN_delayTimers dt, uint16_t msTime) {
-    timersBuff[dt] = (tim_event + msTime + 1u);
+    if(0u != msTime)
+        timersBuff[dt] = (tim_event + msTime + 1u);
+    else
+        timersBuff[dt] = 0u;
 }
 
 void TIM_handleTask(void) {
