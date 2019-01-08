@@ -23,6 +23,13 @@ void tmm_changeModeInit(TMM_tStatus status) {
             }
             tm1638_showLed(0u);
             break;
+        case TMM_STATUS_MODE_0:
+            tmm_tlBuff[0] = 0xFFu;
+            for(i = 1u; i < 9u; i++) {
+                tmm_tlBuff[i] = ' ';
+            }
+            tm1638_showLed(0u);
+            break;
         case TMM_STATUS_MODE_1:
         default:
             for(i = 1u; i < 9u; i++) {
@@ -52,7 +59,9 @@ void tmm_changeModeIf(void) {
         }
         if(5u == j) {
             j = tmm_tlBuff[2];
-            if(('0' < j) && (j < '4')) {
+            if(j == '0') {
+                tmm_changeModeInit(TMM_STATUS_MODE_0);
+            } else if(j < '4') {
                 tmm_changeModeInit((TMM_tStatus)(j - '0'));
             }
         }
@@ -96,6 +105,11 @@ void TMM_handleTask(void) {
             TIM_delaySetTimer(DELAY_TM1638, 100u);
 
             switch(tmm_status) {
+                case TMM_STATUS_MODE_0:
+                    if(0u != ch) {
+                        tmm_changeModeInit(TMM_STATUS_MODE_1);
+                    }
+                    break;
                 case TMM_STATUS_MODE_1:
                     if(0u != ch) {
                         tm1638_showLed(ch);
