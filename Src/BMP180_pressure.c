@@ -3,6 +3,8 @@
 static BMP180 sensorPresure;
 static bool BMP180_bBmp180present = false;
 static BMP180_eState BMP180_state = BMP180_STATE_NOT_INIT;
+static uint8_t BMP180_ucReInit = 0u;
+
 void BMP180_calculateTemperature(void);
 void BMP180_calculatePressure(void);
 
@@ -96,7 +98,8 @@ void BMP180_calculatePressure(void) {
 
 void BMP180_Init(void) {
     BMP180_bBmp180present = false;
-    HI2C0_vInit(0xEEu);
+    BMP180_ucReInit = 0u;
+    HI2C0_vInit(BMP180_getIdChip());
     if(0x55u == HI2C0_readByte(0xD0u, true)) {   // 0xD0u - Chip-id
         BMP180_bBmp180present = HI2C0_isChipPresent();
         BMP180_reset();
@@ -134,6 +137,10 @@ BMP180_eState BMP180_handleTask(void) {
             }
             break;
         case BMP180_STATE_NOT_PRESENT:
+            BMP180_ucReInit++;
+            if(0xFFu == BMP180_ucReInit) {
+                BMP180_state = BMP180_STATE_NOT_INIT;
+            }
             break;
         case BMP180_STATE_NOT_INIT:
             BMP180_Init();
@@ -147,4 +154,8 @@ BMP180_eState BMP180_handleTask(void) {
             break;
     }
     return BMP180_state;
+}
+
+uint8_t BMP180_getIdChip(void) {
+    return 0xEEu;
 }

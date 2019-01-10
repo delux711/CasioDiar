@@ -58,9 +58,9 @@ typedef enum _BMP180_eState {
 extern BMP180 sensorPresure;
 extern bool BMP180_bBmp180present;
 
-extern uint8_t HI2C_readByte(uint8_t addr, bool stop);
-extern bool HI2C_writeByte(uint8_t addr, bool stop, uint8_t data);
-extern bool HI2C_writeAddr(uint8_t addr, bool stop);
+//extern uint8_t HI2C_readByte(uint8_t addr, bool stop);
+//extern bool HI2C_writeByte(uint8_t addr, bool stop, uint8_t data);
+//extern bool HI2C_writeAddr(uint8_t addr, bool stop);
 extern void BMP180_readCalData(void);
 extern void BMP180_readTemp(void);
 extern void BMP180_readTempForced(void);
@@ -74,5 +74,6 @@ extern void BMP180_InitForced(void);
 extern bool BMP180_isPresent(void);
 extern int32_t BMP180_getTemperature(void);
 extern int32_t BMP180_getPressure(void);
+extern uint8_t BMP180_getIdChip(void);
 
 #endif // _BMP180_PRESSURE

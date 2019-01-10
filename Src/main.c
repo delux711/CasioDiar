@@ -9,9 +9,9 @@
 #include "serialPort_u1.h"
 #include <stdio.h>
 #include <stdbool.h>
-#include "BMP180_pressure.h"
 #include "mfx_l4.h"
 #include "tm1638_modes.h"
+#include "hi2c0_manage.h"
 
 // SYSCLK - 4MHz
 // MSI - 4MHz
@@ -123,6 +123,11 @@ int main(void) {
     if(*lcdRam1 && *lcdRam2 && *lcdRam3 && *lcdRam4) {
     }*/
     printf("\nTestovanie\n");
+    RCC->AHB2ENR |= RCC_AHB2ENR_GPIODEN;
+    USART_TX for debug -> PD5
+    USART_RX for debug -> PD6
+    //GPIOD->MODER &= (~(GPIO_MODER_MODE5 | GPIO_MODER_MODE6)); // as INPUT - debug USART do not work
+    
     sprintf((char*)buff, "%06d", count);
     LCD_GLASS_DisplayString(buff);
     if(tl_getTl().stred) {
@@ -254,26 +259,7 @@ int main(void) {
             }
         }
 
-        (void)BMP180_handleTask();
-        if(true == BMP180_isPresent()) {
-            if(TIM_delayIsTimerDown(DELAY_MAIN_LCD_TEMP_SHOW) == true) {
-                TIM_delaySetTimer(DELAY_MAIN_LCD_TEMP_SHOW, 4000u);
-                TIM_delaySetTimer(DELAY_MAIN_LCD_PRESSURE_SHOW, 1000u);
-                TIM_delaySetTimer(DELAY_MAIN_LCD_SHOW, 1000u);
-                //BMP180_readTemp();
-                BMP180_readPressureAndTempForced(BMP180_eOverSampleMax25_5ms);
-                //sprintf((char*)buff, "%06Ld°C", sensorPresure.T);
-                sprintf((char*)buff, "%d.%d°C", (int8_t)(BMP180_getTemperature() / 10u), (BMP180_getTemperature() / 100u));
-                LCD_GLASS_DisplayString((uint8_t*) buff);
-            }
-            if(TIM_delayIsTimerDown(DELAY_MAIN_LCD_PRESSURE_SHOW) == true) {
-                TIM_delaySetTimer(DELAY_MAIN_LCD_PRESSURE_SHOW, 5000u);
-                TIM_delaySetTimer(DELAY_MAIN_LCD_SHOW, 1000u);
-                //sprintf((char*)buff, "%ld", BMP180_getPressure());
-                sprintf((char*)buff, "%d", (int16_t)BMP180_getPressure());
-                LCD_GLASS_DisplayString((uint8_t*) buff);
-            }
-        }
+        hi2c0m_handleTask();
         TMM_handleTask();
         if(MFX_STATUS_DONE == mfx_handleTask()) {
             TIM_delaySetTimer(DELAY_MAIN_LCD_SHOW, 2500u);

@@ -456,6 +456,11 @@
               <FileType>1</FileType>
               <FilePath>.\Src\hi2c0.c</FilePath>
             </File>
+            <File>
+              <FileName>hi2c0_manage.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Src\hi2c0_manage.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -530,6 +535,11 @@
               <FileName>hi2c0.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\Inc\hi2c0.h</FilePath>
+            </File>
+            <File>
+              <FileName>hi2c0_manage.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Inc\hi2c0_manage.h</FilePath>
             </File>
           </Files>
         </Group>
