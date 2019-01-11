@@ -20,6 +20,8 @@ typedef enum {
     DELAY_MFX_INIT,
     DELAY_TM1638,
     DELAY_TM1638_BLINK,
+    DELAY_SHT3X_GLOBAL,
+    DELAY_SHT3X_SHOW,
     DELAY_TIMER_END
 } TIM_EN_delayTimers;
 

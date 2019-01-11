@@ -51,29 +51,38 @@ typedef enum _BMP180_eState {
     BMP180_STATE_SLEEP,
     BMP180_STATE_NOT_INIT,
     BMP180_STATE_NOT_PRESENT,
-    BMP180_STATE_PRESSURE,
-    BMP180_STATE_TEMPERATURE
+    BMP180_STATE_MEASUREMENT_START,
+    BMP180_STATE_TEMPERATURE_WHITE_TO_DONE,
+    /* must be behind start*/
+    BMP180_STATE_TEMPERATURE_READ1,
+    BMP180_STATE_TEMPERATURE_READ2,
+    /* must be behind end */
+    BMP180_STATE_TEMPERATURE_CALCULATE,
+    BMP180_STATE_PRESSURE_START,
+    BMP180_STATE_PRESSURE_WHITE_TO_DONE,
+    /* must be behind start*/
+    BMP180_STATE_PRESSURE_READ1,
+    BMP180_STATE_PRESSURE_READ2,
+    BMP180_STATE_PRESSURE_READ3,
+    /* must be behind end */
+    BMP180_STATE_PRESSURE_CALCULATE
 } BMP180_eState;
 
 extern BMP180 sensorPresure;
 extern bool BMP180_bBmp180present;
 
-//extern uint8_t HI2C_readByte(uint8_t addr, bool stop);
-//extern bool HI2C_writeByte(uint8_t addr, bool stop, uint8_t data);
-//extern bool HI2C_writeAddr(uint8_t addr, bool stop);
-extern void BMP180_readCalData(void);
-extern void BMP180_readTemp(void);
-extern void BMP180_readTempForced(void);
-extern void BMP180_readPressureAndTemp(BMP180_eOverSample oss);
-extern void BMP180_readPressureAndTempForced(BMP180_eOverSample oss);
-extern void BMP180_reset(void);
-extern bool BMP180_doneSample(void);
 extern BMP180_eState BMP180_handleTask(void);
-extern void BMP180_Init(void);
-extern void BMP180_InitForced(void);
-extern bool BMP180_isPresent(void);
+extern BMP180_eState BMP180_actualState(void);
+extern void BMP180_startMeasurement(BMP180_eOverSample oss);
 extern int32_t BMP180_getTemperature(void);
 extern int32_t BMP180_getPressure(void);
 extern uint8_t BMP180_getIdChip(void);
+extern bool BMP180_isPresent(void);
+
+extern void BMP180_readCalDataForced(void);
+extern void BMP180_readTempForced(void);
+extern void BMP180_readPressureAndTempForced(BMP180_eOverSample oss);
+extern void BMP180_reset(void);
+extern void BMP180_Init(void); // do not use if handleTask is used
 
 #endif // _BMP180_PRESSURE

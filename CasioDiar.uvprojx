@@ -461,6 +461,11 @@
               <FileType>1</FileType>
               <FilePath>.\Src\hi2c0_manage.c</FilePath>
             </File>
+            <File>
+              <FileName>SHT3x_humidity.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Src\SHT3x_humidity.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -540,6 +545,11 @@
               <FileName>hi2c0_manage.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\Inc\hi2c0_manage.h</FilePath>
+            </File>
+            <File>
+              <FileName>SHT3x_humidity.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Inc\SHT3x_humidity.h</FilePath>
             </File>
           </Files>
         </Group>

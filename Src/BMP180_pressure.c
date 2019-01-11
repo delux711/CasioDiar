@@ -7,6 +7,7 @@ static uint8_t BMP180_ucReInit = 0u;
 
 void BMP180_calculateTemperature(void);
 void BMP180_calculatePressure(void);
+bool BMP180_startMeasurementForced(BMP180_eOverSample oss);
 
 bool BMP180_isDoneSample(void) {
     return (0u == (0x20u & HI2C0_readByte(0xF4u, true)));
@@ -16,7 +17,7 @@ void BMP180_reset(void) {
     (void)HI2C0_writeByte(0xE0u, true, 0xB6u);   // 0xB6-reset sequence
 }
 
-void BMP180_readCalData(void) {
+void BMP180_readCalDataForced(void) {
     uint8_t i;
     if(true == HI2C0_writeAddr(0xAAu, true)) {
         if(true == HI2C0_bSetAddr(0xEFu)) { // read
@@ -30,7 +31,7 @@ void BMP180_readCalData(void) {
     }
 }
 
-bool BMP180_startMeasurement(BMP180_eOverSample oss) {
+bool BMP180_startMeasurementForced(BMP180_eOverSample oss) {
     bool ret;
     ret = HI2C0_writeByte(0xF4u, true, oss);
     if(true == ret) {
@@ -40,8 +41,7 @@ bool BMP180_startMeasurement(BMP180_eOverSample oss) {
 }
 
 void BMP180_readTempForced(void) {
-    BMP180_state = BMP180_STATE_TEMPERATURE;
-    if(true == BMP180_startMeasurement(BMP180_eOverSampleTemperature)) {
+    if(true == BMP180_startMeasurementForced(BMP180_eOverSampleTemperature)) {
         sensorPresure.UT = (int32_t)(HI2C0_readByte(0xF6u, false) << 8u); // address with temparature
         sensorPresure.UT |= HI2C0_vTriggerReceive(true);
         BMP180_calculateTemperature();
@@ -50,7 +50,7 @@ void BMP180_readTempForced(void) {
     
 void BMP180_readPressureAndTempForced(BMP180_eOverSample oss) {
     BMP180_readTempForced();
-    if(true == BMP180_startMeasurement(oss)) {
+    if(true == BMP180_startMeasurementForced(oss)) {
         sensorPresure.oss = oss >> 6u;
         sensorPresure.UP =  (int32_t)(HI2C0_readByte(0xF6u, false) << 16u); // address with MSB pressure - address 0xF6
         sensorPresure.UP |= HI2C0_vTriggerReceive(false) << 8u;         // address with LSB pressure - address 0xF7
@@ -103,12 +103,11 @@ void BMP180_Init(void) {
     if(0x55u == HI2C0_readByte(0xD0u, true)) {   // 0xD0u - Chip-id
         BMP180_bBmp180present = HI2C0_isChipPresent();
         BMP180_reset();
-        BMP180_readCalData();
+        BMP180_readCalDataForced();
     }
 }
 
 bool BMP180_isPresent(void) {
-    BMP180_bBmp180present = HI2C0_isChipPresent();
     return BMP180_bBmp180present;
 }
 
@@ -120,21 +119,16 @@ int32_t BMP180_getPressure(void) {
     return sensorPresure.P;
 }
 
-void BMP180_readPressureAndTemp(BMP180_eOverSample oss) {
-    BMP180_state = BMP180_STATE_PRESSURE;
-    sensorPresure.oss = (uint8_t) oss;
-}
-
-void BMP180_readTemp(void) {
-    BMP180_state = BMP180_STATE_TEMPERATURE;
+void BMP180_startMeasurement(BMP180_eOverSample oss) {
+    if(BMP180_STATE_SLEEP == BMP180_state) {
+        BMP180_state = BMP180_STATE_MEASUREMENT_START;
+        sensorPresure.oss = (uint8_t) oss;
+    }
 }
 
 BMP180_eState BMP180_handleTask(void) {
     switch(BMP180_state) {
         case BMP180_STATE_SLEEP:
-            if(false == BMP180_isPresent()) {
-                BMP180_state = BMP180_STATE_NOT_PRESENT;
-            }
             break;
         case BMP180_STATE_NOT_PRESENT:
             BMP180_ucReInit++;
@@ -144,18 +138,86 @@ BMP180_eState BMP180_handleTask(void) {
             break;
         case BMP180_STATE_NOT_INIT:
             BMP180_Init();
-            if(true == BMP180_bBmp180present) {
+            if(true == HI2C0_isChipPresent()) {
                 BMP180_state = BMP180_STATE_SLEEP;
+                BMP180_bBmp180present = HI2C0_isChipPresent();
             } else {
                 BMP180_state = BMP180_STATE_NOT_PRESENT;
             }
             break;
-        case BMP180_STATE_TEMPERATURE:
+
+        case BMP180_STATE_MEASUREMENT_START:
+            if(true == HI2C0_writeByte(0xF4u, true, BMP180_eOverSampleTemperature)) {
+                BMP180_state = BMP180_STATE_TEMPERATURE_WHITE_TO_DONE;
+            } else {
+                BMP180_bBmp180present = HI2C0_isChipPresent();
+            }
             break;
+        case BMP180_STATE_TEMPERATURE_WHITE_TO_DONE:
+            if(true == BMP180_isDoneSample()) {
+                BMP180_state = BMP180_STATE_TEMPERATURE_READ1;
+            } else {
+                BMP180_bBmp180present = HI2C0_isChipPresent();
+            }
+            break;
+        case BMP180_STATE_TEMPERATURE_READ1:
+            sensorPresure.UT = (int32_t)(HI2C0_readByte(0xF6u, false) << 8u); // address with temparature
+            BMP180_state++;
+            break;
+        case BMP180_STATE_TEMPERATURE_READ2:
+            sensorPresure.UT |= HI2C0_vTriggerReceive(true);
+            BMP180_state = BMP180_STATE_TEMPERATURE_CALCULATE;
+            break;
+        case BMP180_STATE_TEMPERATURE_CALCULATE:
+            BMP180_calculateTemperature();
+            BMP180_state = BMP180_STATE_PRESSURE_START;
+            break;
+
+        case BMP180_STATE_PRESSURE_START:
+            if(true == HI2C0_writeByte(0xF4u, true, sensorPresure.oss)) {
+                BMP180_state = BMP180_STATE_PRESSURE_WHITE_TO_DONE;
+            } else {
+                BMP180_bBmp180present = HI2C0_isChipPresent();
+            }
+            break;
+        case BMP180_STATE_PRESSURE_WHITE_TO_DONE:
+            if(true == BMP180_isDoneSample()) {
+                BMP180_state = BMP180_STATE_PRESSURE_READ1;
+            } else {
+                BMP180_bBmp180present = HI2C0_isChipPresent();
+            }
+            break;
+        case BMP180_STATE_PRESSURE_READ1:
+            sensorPresure.oss >>= 6u;
+            sensorPresure.UP =  (int32_t)(HI2C0_readByte(0xF6u, false) << 16u); // address with MSB pressure - address 0xF6
+            BMP180_state++;
+            break;
+        case BMP180_STATE_PRESSURE_READ2:
+            sensorPresure.UP |= HI2C0_vTriggerReceive(false) << 8u;         // address with LSB pressure - address 0xF7
+            BMP180_state++;
+            break;
+        case BMP180_STATE_PRESSURE_READ3:
+            sensorPresure.UP |= HI2C0_vTriggerReceive(true);                // address with XLSB pressure - address 0xF8
+            BMP180_state = BMP180_STATE_PRESSURE_CALCULATE;
+            break;
+        case BMP180_STATE_PRESSURE_CALCULATE:
+            BMP180_calculatePressure();
+            BMP180_state = BMP180_STATE_SLEEP;
+            break;
+        default:
+            BMP180_state = BMP180_STATE_NOT_PRESENT;
+            break;
+    }
+    if((false == BMP180_isPresent()) && (BMP180_STATE_NOT_INIT != BMP180_state)) {
+        BMP180_state = BMP180_STATE_NOT_PRESENT;
     }
     return BMP180_state;
 }
 
 uint8_t BMP180_getIdChip(void) {
     return 0xEEu;
+}
+
+BMP180_eState BMP180_actualState(void) {
+    return BMP180_state;
 }

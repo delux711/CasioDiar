@@ -1,5 +1,6 @@
-#ifndef _SHT3X_H
-#define _SHT3X_H
+#ifndef _HI2C0_MANAGE_H
+#define _HI2C0_MANAGE_H
+
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -7,7 +8,8 @@
 #include "timerLib.h"
 #include "hi2c0.h"
 #include "BMP180_pressure.h"
+#include "SHT3x_humidity.h"
 
 void hi2c0m_handleTask(void);
 
-#endif // _SHT3X_H
+#endif // _HI2C0_MANAGE_H
