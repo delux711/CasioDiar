@@ -36,16 +36,20 @@ void hi2c0m_handleTask(void) {
             }
         } else if((true == TIM_delayIsTimerDown(DELAY_MAIN_LCD_TEMP_SHOW)) &&
                     (true == hi2c0m_humidityShow) && (true == hi2c0m_tempShow)) {
-            TIM_delaySetTimer(DELAY_MAIN_LCD_TEMP_SHOW, 800u);
-            TIM_delaySetTimer(DELAY_MAIN_LCD_SHOW, 800u);
+            TIM_delaySetTimer(DELAY_MAIN_LCD_TEMP_SHOW, 500u);
+            TIM_delaySetTimer(DELAY_MAIN_LCD_SHOW, 500u);
             switch(hi2c0m_showStep++) {
                 case 0: 
                     temp = ((float)(175*iTemp)/0xFFFFu) - 45;
                     sprintf((char*)buff, "T:%.2fC", temp);
+                    TIM_delaySetTimer(DELAY_MAIN_LCD_TEMP_SHOW, 1000u);
+                    TIM_delaySetTimer(DELAY_MAIN_LCD_SHOW, 1000u);
                     break;
                 case 1:
                     hum = (100u * uiHumid) / 65535u;
                     sprintf((char*)buff, "H:%d%%", hum);
+                    TIM_delaySetTimer(DELAY_MAIN_LCD_TEMP_SHOW, 1000u);
+                    TIM_delaySetTimer(DELAY_MAIN_LCD_SHOW, 1000u);
                     break;
                 case 2: 
                     tempBmp = (float)BMP180_getTemperature() / 10;
@@ -57,7 +61,7 @@ void hi2c0m_handleTask(void) {
                     hi2c0m_showStep = 0u;
                     hi2c0m_humidityShow = false;
                     hi2c0m_tempShow = false;
-                    TIM_delaySetTimer(DELAY_MAIN_LCD_TEMP_SHOW, 3000u);
+                    TIM_delaySetTimer(DELAY_MAIN_LCD_TEMP_SHOW, 4000u);
                     break;
             }
             LCD_GLASS_DisplayString((uint8_t*) buff);
