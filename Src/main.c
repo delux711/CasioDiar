@@ -124,8 +124,8 @@ int main(void) {
     }*/
     printf("\nTestovanie\n");
     RCC->AHB2ENR |= RCC_AHB2ENR_GPIODEN;
-    USART_TX for debug -> PD5
-    USART_RX for debug -> PD6
+    // USART_TX for debug -> PD5
+    // USART_RX for debug -> PD6
     //GPIOD->MODER &= (~(GPIO_MODER_MODE5 | GPIO_MODER_MODE6)); // as INPUT - debug USART do not work
     
     sprintf((char*)buff, "%06d", count);

@@ -157,9 +157,9 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
-          <LineNumber>24</LineNumber>
+          <LineNumber>51</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134232054</Address>
+          <Address>134235986</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
@@ -168,14 +168,14 @@
           <BreakIfRCount>1</BreakIfRCount>
           <Filename>.\Src\hi2c0_manage.c</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\CasioDiar\Src/hi2c0_manage.c\24</Expression>
+          <Expression>\\CasioDiar\Src/hi2c0_manage.c\51</Expression>
         </Bp>
         <Bp>
           <Number>1</Number>
           <Type>0</Type>
           <LineNumber>136</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134220260</Address>
+          <Address>134223912</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
@@ -292,6 +292,26 @@
           <count>20</count>
           <WinNumber>1</WinNumber>
           <ItemText>bIsChippresent</ItemText>
+        </Ww>
+        <Ww>
+          <count>21</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>iTemp,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>22</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>tempBmp,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>23</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>temp10,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>24</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>temp100,0x0A</ItemText>
         </Ww>
       </WatchWindow1>
       <WatchWindow2>

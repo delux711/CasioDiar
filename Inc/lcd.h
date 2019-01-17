@@ -361,7 +361,7 @@ typedef enum
 #define C_PERCENT_1           ((uint16_t) 0xec00)
 
 /* constant code for small o */
-#define C_PERCENT_2           ((uint16_t) 0xb300)
+#define C_PERCENT_2           ((uint16_t) 0x0A09)
 
 /* constant code for ',' */
 #define C_COMMA               ((uint16_t) 0x0080)
