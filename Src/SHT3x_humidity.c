@@ -1,51 +1,55 @@
 #include "SHT3x_humidity.h"
-// sht3x_
+// SHT3x_
 
-static sht3x_status_t sht3x_status = SHT3X_STATUS_NOT_INIT;
-static bool sht3x_bIsPresent = false;
+static SHT3x_status_t SHT3x_status = SHT3X_STATUS_NOT_INIT;
+static bool SHT3x_bIsPresent = false;
+static uint16_t SHT3x_uiLastTemperatureRaw = 0u;
+static uint16_t SHT3x_uiLastHumidityRaw = 0u;
 
-void sht3x_delay(uint16_t time);
-bool sht3x_crcCheck(uint16_t crc);
+void SHT3x_delay(uint16_t time);
+bool SHT3x_crcCheck(uint16_t crc);
 
 
-void sht3x_delay(uint16_t time) {
+void SHT3x_delay(uint16_t time) {
     TIM_delaySetTimer(DELAY_SHT3X_GLOBAL, time);
     while(false == TIM_delayIsTimerDown(DELAY_SHT3X_GLOBAL)) {            
         TIM_handleTask();
     };
 }
 
-void sht3x_resetForced(void) {
-    sht3x_bIsPresent = HI2C0_writeByte(0x30u, true, 0xA2u); // send 0x30A2 to reset
+void SHT3x_resetForced(void) {
+    SHT3x_bIsPresent = HI2C0_writeByte(0x30u, true, 0xA2u); // send 0x30A2 to reset
 }
 
-void sht3x_statusClearForced(void) {
-    sht3x_bIsPresent = HI2C0_writeByte(0x30u, true, 0x41u); // send 0X3041 to clear status register
+void SHT3x_statusClearForced(void) {
+    SHT3x_bIsPresent = HI2C0_writeByte(0x30u, true, 0x41u); // send 0X3041 to clear status register
 }
 
-void sht3x_vInitForced(void) {
-    HI2C0_vInit(sht3x_getIdChip());
-    sht3x_delay(2u); // 2ms wait after power reset
-    sht3x_resetForced();
-    sht3x_delay(2u); // 2ms wait after reset
-    sht3x_statusClearForced();
+void SHT3x_vInitForced(void) {
+    SHT3x_uiLastTemperatureRaw = 0u;
+    SHT3x_uiLastHumidityRaw = 0u;
+    HI2C0_vInit(SHT3x_getIdChip());
+    SHT3x_delay(2u); // 2ms wait after power reset
+    SHT3x_resetForced();
+    SHT3x_delay(2u); // 2ms wait after reset
+    SHT3x_statusClearForced();
 }
 
-bool sht3x_getMeasurementForced(uint16_t *uiRawTemperature, uint16_t *uiRawHumidity) {
+bool SHT3x_startMeasurementForced(void) {
     bool ret;
     uint8_t crc;
     ret = false;
     if(true == HI2C0_writeByte(0x2Cu, true, 0x10u)) { // 0x2C-enable clock stretching; 0x10 repeatability Low
-        if(true == HI2C0_bSetAddr(sht3x_getIdChip() | 0x01u)) { // read
-            //sht3x_delay(20u);
-            *uiRawTemperature = (HI2C0_vTriggerReceive(false) << 8u);
-            *uiRawTemperature |= HI2C0_vTriggerReceive(false);
+        if(true == HI2C0_bSetAddr(SHT3x_getIdChip() | 0x01u)) { // read
+            SHT3x_delay(20u);
+            SHT3x_uiLastTemperatureRaw = (HI2C0_vTriggerReceive(false) << 8u);
+            SHT3x_uiLastTemperatureRaw |= HI2C0_vTriggerReceive(false);
             crc = HI2C0_vTriggerReceive(false);
-            if(true == sht3x_crcCheck(crc)) {
-                *uiRawHumidity = (HI2C0_vTriggerReceive(false) << 8u);
-                *uiRawHumidity |= HI2C0_vTriggerReceive(false);
+            if(true == SHT3x_crcCheck(crc)) {
+                SHT3x_uiLastHumidityRaw = (HI2C0_vTriggerReceive(false) << 8u);
+                SHT3x_uiLastHumidityRaw |= HI2C0_vTriggerReceive(false);
                 crc = HI2C0_vTriggerReceive(true);
-                if(true == sht3x_crcCheck(crc)) {
+                if(true == SHT3x_crcCheck(crc)) {
                     ret = true;
                 }
             }
@@ -54,38 +58,43 @@ bool sht3x_getMeasurementForced(uint16_t *uiRawTemperature, uint16_t *uiRawHumid
     return ret;
 }
 
-float sht3x_getTemperature(uint16_t *uiRawTemperature) {
-    return ((float)(175 * *uiRawTemperature)/0xFFFFu) - 45;
+void SHT3x_getMeasurementRaw(uint16_t *uiRawTemperature, uint16_t *uiRawHumidity) {
+    *uiRawTemperature = SHT3x_uiLastTemperatureRaw;
+    *uiRawHumidity = SHT3x_uiLastHumidityRaw;
 }
 
-uint16_t sht3x_getHumidity(uint16_t *uiRawHumidity) {
-    return (100u * *uiRawHumidity) / 65535u;
+float SHT3x_getTemperature(void) {
+    return ((float)(175 * SHT3x_uiLastTemperatureRaw) / 65535u) - 45;
 }
 
-bool sht3x_crcCheck(uint16_t crc) {
+uint16_t SHT3x_getHumidity(void) {
+    return (100u * SHT3x_uiLastHumidityRaw) / 65535u;
+}
+
+bool SHT3x_crcCheck(uint16_t crc) {
     return true;
 }
 
-bool sht3x_isPresent(void) {
-    return sht3x_bIsPresent;
+bool SHT3x_isPresent(void) {
+    return SHT3x_bIsPresent;
 }
 
-uint8_t sht3x_getIdChip(void) {
-    return 0x88u; // 0x44u;
+uint8_t SHT3x_getIdChip(void) {
+    return 0x88u;
 }
 
-sht3x_status_t sht3x_actualState(void) {
-    return sht3x_status;
+SHT3x_status_t SHT3x_actualState(void) {
+    return SHT3x_status;
 }
 
-sht3x_status_t sht3x_handleTask(void) {
-    switch(sht3x_status) {
+SHT3x_status_t SHT3x_handleTask(void) {
+    switch(SHT3x_status) {
         case SHT3X_STATUS_NOT_INIT:
-            HI2C0_vInit(sht3x_getIdChip());
-            sht3x_vInitForced();
-            sht3x_status = SHT3X_STATUS_SLEEP;
+            HI2C0_vInit(SHT3x_getIdChip());
+            SHT3x_vInitForced();
+            SHT3x_status = SHT3X_STATUS_SLEEP;
             break;
         default: break;
     }
-    return sht3x_status;
+    return SHT3x_status;
 }

@@ -7,7 +7,7 @@
 #include "hi2c0.h"
 #include "timerLib.h"
 
-typedef enum _sht3x_status_t {
+typedef enum _SHT3x_status_t {
     SHT3X_STATUS_NOT_INIT,
     SHT3X_STATUS_SLEEP,
     SHT3X_STATUS_RESET_SEND,
@@ -27,18 +27,19 @@ typedef enum _sht3x_status_t {
     SHT3X_STATUS_READ_STATUS_READ_CRC,
     SHT3X_STATUS_START_MEASUREMENT1,
     SHT3X_STATUS_START_MEASUREMENT2,
-} sht3x_status_t;
+} SHT3x_status_t;
 
-extern sht3x_status_t sht3x_handleTask(void);
-extern sht3x_status_t sht3x_actualState(void);
-extern bool sht3x_isPresent(void);
-extern uint8_t sht3x_getIdChip(void);
-extern float sht3x_getTemperature(uint16_t *uiRawTemperature);
-extern uint16_t sht3x_getHumidity(uint16_t *uiRawHumidity);
+extern SHT3x_status_t SHT3x_handleTask(void);
+extern SHT3x_status_t SHT3x_actualState(void);
+extern bool SHT3x_isPresent(void);
+extern uint8_t SHT3x_getIdChip(void);
+extern void SHT3x_getMeasurementRaw(uint16_t *iTemperature, uint16_t *uiHumidity);
+extern float SHT3x_getTemperature(void);
+extern uint16_t SHT3x_getHumidity(void);
 
-extern void sht3x_vInitForced(void);
-extern bool sht3x_getMeasurementForced(uint16_t *iTemperature, uint16_t *uiHumidity);
-extern void sht3x_resetForced(void);
-extern void sht3x_statusClearForced(void);
+extern void SHT3x_vInitForced(void);
+extern bool SHT3x_startMeasurementForced(void);
+extern void SHT3x_resetForced(void);
+extern void SHT3x_statusClearForced(void);
 
 #endif // _SHT3X_H

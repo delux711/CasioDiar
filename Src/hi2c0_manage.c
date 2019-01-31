@@ -9,8 +9,6 @@ static uint8_t hi2c0m_showStep = 0u;
 static uint8_t buffTm1638[10];
 static bool hi2c0m_tempShow = false;
 static bool hi2c0m_humidityShow = false;
-static uint16_t uiTemp = 0u;
-static uint16_t uiHumid = 0u;
 
 void hi2c0m_handleTask(void) {
     BMP180_eState bmpState;
@@ -19,12 +17,12 @@ void hi2c0m_handleTask(void) {
     
     if((0u == hi2c0m_stateInit) && (true == TIM_delayIsTimerDown(DELAY_MAIN_LCD_TEMP_SHOW))) {
         if((BMP180_STATE_SLEEP == BMP180_actualState()) && (false == hi2c0m_humidityShow)) {
-            HI2C0_setChipAddress(sht3x_getIdChip());
-            if(true == sht3x_getMeasurementForced(&uiTemp, &uiHumid)) {
+            HI2C0_setChipAddress(SHT3x_getIdChip());
+            if(true == SHT3x_startMeasurementForced()) {
                 hi2c0m_humidityShow = true;
                 BMP180_startMeasurement(BMP180_eOverSampleMax25_5ms);
             }
-        } else if((SHT3X_STATUS_SLEEP == sht3x_actualState()) && (false == hi2c0m_tempShow)) {
+        } else if((SHT3X_STATUS_SLEEP == SHT3x_actualState()) && (false == hi2c0m_tempShow)) {
             HI2C0_setChipAddress(BMP180_getIdChip());
             bmpState = BMP180_handleTask();
             if(true == BMP180_isPresent()) {
@@ -38,7 +36,7 @@ void hi2c0m_handleTask(void) {
             TIM_delaySetTimer(DELAY_MAIN_LCD_SHOW, 500u);
             switch(hi2c0m_showStep++) {
                 case 0: 
-                    sprintf((char*)buff, "T:%.2fC", sht3x_getTemperature(&uiTemp));
+                    sprintf((char*)buff, "T:%.2fC", SHT3x_getTemperature());
                     TIM_delaySetTimer(DELAY_MAIN_LCD_TEMP_SHOW, 1000u);
                     TIM_delaySetTimer(DELAY_MAIN_LCD_SHOW, 1000u);
                     if(TMM_STATUS_MODE_4_TEMP == TMM_getState()) {
@@ -72,7 +70,7 @@ void hi2c0m_handleTask(void) {
                     }
                     break;
                 case 1:
-                    sprintf((char*)buff, "H:%d%%", sht3x_getHumidity(&uiHumid));
+                    sprintf((char*)buff, "H:%d%%", SHT3x_getHumidity());
                     TIM_delaySetTimer(DELAY_MAIN_LCD_TEMP_SHOW, 1000u);
                     TIM_delaySetTimer(DELAY_MAIN_LCD_SHOW, 1000u);
                     if(TMM_STATUS_MODE_4_TEMP == TMM_getState()) {
@@ -102,7 +100,7 @@ void hi2c0m_handleTask(void) {
                 hi2c0m_stateInit &= ~HI2CM_STATE_INIT_BMP180;
             }
         } else if(0u != (HI2CM_STATE_INIT_SHT3X & hi2c0m_stateInit)) {
-            if(SHT3X_STATUS_SLEEP == sht3x_handleTask()) {
+            if(SHT3X_STATUS_SLEEP == SHT3x_handleTask()) {
                 hi2c0m_stateInit &= ~HI2CM_STATE_INIT_SHT3X;
             }
         }
