@@ -31,19 +31,19 @@ void sht3x_vInitForced(void) {
     sht3x_statusClearForced();
 }
 
-bool sht3x_getMeasurementForced(uint16_t *iTemperature, uint16_t *uiHumidity) {
+bool sht3x_getMeasurementForced(uint16_t *uiRawTemperature, uint16_t *uiRawHumidity) {
     bool ret;
     uint8_t crc;
     ret = false;
     if(true == HI2C0_writeByte(0x2Cu, true, 0x10u)) { // 0x2C-enable clock stretching; 0x10 repeatability Low
         if(true == HI2C0_bSetAddr(sht3x_getIdChip() | 0x01u)) { // read
             //sht3x_delay(20u);
-            *iTemperature = (HI2C0_vTriggerReceive(false) << 8u);
-            *iTemperature |= HI2C0_vTriggerReceive(false);
+            *uiRawTemperature = (HI2C0_vTriggerReceive(false) << 8u);
+            *uiRawTemperature |= HI2C0_vTriggerReceive(false);
             crc = HI2C0_vTriggerReceive(false);
             if(true == sht3x_crcCheck(crc)) {
-                *uiHumidity = (HI2C0_vTriggerReceive(false) << 8u);
-                *uiHumidity |= HI2C0_vTriggerReceive(false);
+                *uiRawHumidity = (HI2C0_vTriggerReceive(false) << 8u);
+                *uiRawHumidity |= HI2C0_vTriggerReceive(false);
                 crc = HI2C0_vTriggerReceive(true);
                 if(true == sht3x_crcCheck(crc)) {
                     ret = true;
@@ -52,6 +52,14 @@ bool sht3x_getMeasurementForced(uint16_t *iTemperature, uint16_t *uiHumidity) {
         }
     }
     return ret;
+}
+
+float sht3x_getTemperature(uint16_t *uiRawTemperature) {
+    return ((float)(175 * *uiRawTemperature)/0xFFFFu) - 45;
+}
+
+uint16_t sht3x_getHumidity(uint16_t *uiRawHumidity) {
+    return (100u * *uiRawHumidity) / 65535u;
 }
 
 bool sht3x_crcCheck(uint16_t crc) {

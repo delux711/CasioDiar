@@ -9,6 +9,7 @@
 #include "hi2c0.h"
 #include "BMP180_pressure.h"
 #include "SHT3x_humidity.h"
+#include "tm1638_modes.h"
 
 void hi2c0m_handleTask(void);
 

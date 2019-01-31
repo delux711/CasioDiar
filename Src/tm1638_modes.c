@@ -23,6 +23,7 @@ void tmm_changeModeInit(TMM_tStatus status) {
             }
             tm1638_showLed(0u);
             break;
+        case TMM_STATUS_MODE_4_TEMP:
         case TMM_STATUS_MODE_0:
             tmm_tlBuff[0] = 0xFFu;
             for(i = 1u; i < 9u; i++) {
@@ -63,6 +64,8 @@ void tmm_changeModeIf(void) {
                 tmm_changeModeInit(TMM_STATUS_MODE_0);
             } else if(j < '4') {
                 tmm_changeModeInit((TMM_tStatus)(j - '0'));
+            } else if(j == '4') {
+                tmm_changeModeInit(TMM_STATUS_MODE_4_TEMP);
             }
         }
     }
@@ -95,6 +98,10 @@ void tmm_tlBuff0plus(void) {
     }
 }
 
+TMM_tStatus TMM_getState(void) {
+    return tmm_status;
+}
+
 void TMM_handleTask(void) {
     uint8_t i, ch;
     uint8_t *p;
@@ -105,6 +112,7 @@ void TMM_handleTask(void) {
             TIM_delaySetTimer(DELAY_TM1638, 100u);
 
             switch(tmm_status) {
+                case TMM_STATUS_MODE_4_TEMP:
                 case TMM_STATUS_MODE_0:
                     if(0u != ch) {
                         tmm_changeModeInit(TMM_STATUS_MODE_1);
@@ -205,7 +213,7 @@ void TMM_handleTask(void) {
                     tm1638_init();
                     tm1638_show((uint8_t*)"98765432");
                     //tm1638_showPos(4u, '0');
-                    tmm_changeModeInit(TMM_STATUS_MODE_1);
+                    tmm_changeModeInit(TMM_STATUS_MODE_4_TEMP);
                     break;
             } // switch
         }

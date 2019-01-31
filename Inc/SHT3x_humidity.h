@@ -33,8 +33,8 @@ extern sht3x_status_t sht3x_handleTask(void);
 extern sht3x_status_t sht3x_actualState(void);
 extern bool sht3x_isPresent(void);
 extern uint8_t sht3x_getIdChip(void);
-extern int16_t sht3x_getTemperature(void);
-extern uint16_t sht3x_getHumidity(void);
+extern float sht3x_getTemperature(uint16_t *uiRawTemperature);
+extern uint16_t sht3x_getHumidity(uint16_t *uiRawHumidity);
 
 extern void sht3x_vInitForced(void);
 extern bool sht3x_getMeasurementForced(uint16_t *iTemperature, uint16_t *uiHumidity);

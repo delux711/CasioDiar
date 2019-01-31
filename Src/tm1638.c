@@ -40,53 +40,57 @@ void tm1638_showToSend(bool isDifferent);
 
 uint8_t tm_convToDigit(uint8_t ch) {
     uint8_t ret;
-    if(0u != (0x80u & ch)) {
-        ch &= 0x7Fu;
-        ret = 0x80u;
+    if(255u != ch) { // 255 is '°' character
+        if(0u != (0x80u & ch)) {
+            ch &= 0x7Fu;
+            ret = 0x80u;
+        } else {
+            ret = 0u;
+        }
+        if(ch & 0x40u) {
+            ch &= 0xDF;
+        }
+        switch(ch) {
+            case '0': ret |= 0x3Fu; break;
+            case '1': ret |= 0x06u; break;
+            case 'Z':
+            case '2': ret |= 0x5Bu; break;
+            case '3': ret |= 0x4Fu; break;
+            case '4': ret |= 0x66u; break;
+            case 'S':
+            case '5': ret |= 0x6Du; break;
+            case '6': ret |= 0x7Du; break;
+            case '7': ret |= 0x07u; break;
+            case '8': ret |= 0x7Fu; break;
+            case 'G':
+            case '9': ret |= 0x6Fu; break;
+            case '-': ret |= 0x40u; break;
+            case '.':
+            case ',': ret |= 0x80u; break;
+            case ' ': ret |= 0x00u; break;
+            case 'A': ret |= 0x77u; break;
+            case 'B': ret |= 0x7Cu; break;
+            case 'C': ret |= 0x39u; break;
+            case 'D': ret |= 0x5Eu; break;
+            case 'E': ret |= 0x79u; break;
+            case 'F': ret |= 0x71u; break;
+            case 'H': ret |= 0x76u; break;
+            case 'I': ret |= 0x04u; break;
+            case 'J': ret |= 0x1Fu; break;
+            case 'L': ret |= 0x38u; break;
+            case 'N': ret |= 0x54u; break;
+            case 'O': ret |= 0x5Cu; break;
+            case 'P': ret |= 0x73u; break;
+            case 'R': ret |= 0x50u; break;
+            case 'T': ret |= 0x78u; break;
+            case 'U': ret |= 0x3Eu; break;
+            case 'Y': ret |= 0x6Eu; break;
+            case 'c': ret |= 0x58u; break;
+        //    case : ret = 0xu; break;
+            default: ret = 0x80u; break;
+        }
     } else {
-        ret = 0u;
-    }
-    if(ch & 0x40u) {
-        ch &= 0xDF;
-    }
-    switch(ch) {
-        case '0': ret |= 0x3Fu; break;
-        case '1': ret |= 0x06u; break;
-        case 'Z':
-        case '2': ret |= 0x5Bu; break;
-        case '3': ret |= 0x4Fu; break;
-        case '4': ret |= 0x66u; break;
-        case 'S':
-        case '5': ret |= 0x6Du; break;
-        case '6': ret |= 0x7Du; break;
-        case '7': ret |= 0x07u; break;
-        case '8': ret |= 0x7Fu; break;
-        case 'G':
-        case '9': ret |= 0x6Fu; break;
-        case '-': ret |= 0x40u; break;
-        case '.':
-        case ',': ret |= 0x80u; break;
-        case ' ': ret |= 0x00u; break;
-        case 'A': ret |= 0x77u; break;
-        case 'B': ret |= 0x7Cu; break;
-        case 'C': ret |= 0x58u; break;
-        case 'D': ret |= 0x5Eu; break;
-        case 'E': ret |= 0x79u; break;
-        case 'F': ret |= 0x71u; break;
-        case 'H': ret |= 0x76u; break;
-        case 'I': ret |= 0x04u; break;
-        case 'J': ret |= 0x1Fu; break;
-        case 'L': ret |= 0x38u; break;
-        case 'N': ret |= 0x54u; break;
-        case 'O': ret |= 0x5Cu; break;
-        case 'P': ret |= 0x73u; break;
-        case 'R': ret |= 0x50u; break;
-        case 'T': ret |= 0x78u; break;
-        case 'U': ret |= 0x3Eu; break;
-        case 'Y': ret |= 0x6Eu; break;
-        
-    //    case : ret = 0xu; break;
-        default: ret = 0x80u; break;
+        ret = 0x63u; // '°'
     }
     return ret;
 }
@@ -114,15 +118,20 @@ void tm1638_showLed(uint8_t led) {
 
 void tm1638_show(uint8_t *buff) {
     bool isDifferent;
-    uint8_t i, j, ch;
+    uint8_t i, j, ch, size;
     isDifferent = false;
     j = 0u;
-    for(i = 0u; i < 8u; i++) {
+    size = 8u;
+    for(i = 0u; i < size; i++) {
         ch = tm_convToDigit(buff[i]);
+        if('.' == buff[i+1]) {
+            ch |= 0x80u;              // if is next char '.' adding '.' on digit
+            i++;
+            size++;
+        }
         if(ch != tm_data[j]) {
             tm_data[j] = ch;
             j += 2u;
-            //tm_data[j++] = 0x01;    // led on
             isDifferent = true;
         } else {
             j += 2u;

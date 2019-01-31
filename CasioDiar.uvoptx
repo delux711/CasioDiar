@@ -157,22 +157,6 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
-          <LineNumber>51</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>134235986</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>1</BreakIfRCount>
-          <Filename>.\Src\hi2c0_manage.c</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression>\\CasioDiar\Src/hi2c0_manage.c\51</Expression>
-        </Bp>
-        <Bp>
-          <Number>1</Number>
-          <Type>0</Type>
           <LineNumber>136</LineNumber>
           <EnabledFlag>1</EnabledFlag>
           <Address>134223912</Address>
@@ -185,6 +169,38 @@
           <Filename>.\Src\BMP180_pressure.c</Filename>
           <ExecCommand></ExecCommand>
           <Expression>\\CasioDiar\Src/BMP180_pressure.c\136</Expression>
+        </Bp>
+        <Bp>
+          <Number>1</Number>
+          <Type>0</Type>
+          <LineNumber>67</LineNumber>
+          <EnabledFlag>1</EnabledFlag>
+          <Address>134236096</Address>
+          <ByteObject>0</ByteObject>
+          <HtxType>0</HtxType>
+          <ManyObjects>0</ManyObjects>
+          <SizeOfObject>0</SizeOfObject>
+          <BreakByAccess>0</BreakByAccess>
+          <BreakIfRCount>1</BreakIfRCount>
+          <Filename>.\Src\hi2c0_manage.c</Filename>
+          <ExecCommand></ExecCommand>
+          <Expression>\\CasioDiar\Src/hi2c0_manage.c\67</Expression>
+        </Bp>
+        <Bp>
+          <Number>2</Number>
+          <Type>0</Type>
+          <LineNumber>43</LineNumber>
+          <EnabledFlag>1</EnabledFlag>
+          <Address>134241526</Address>
+          <ByteObject>0</ByteObject>
+          <HtxType>0</HtxType>
+          <ManyObjects>0</ManyObjects>
+          <SizeOfObject>0</SizeOfObject>
+          <BreakByAccess>0</BreakByAccess>
+          <BreakIfRCount>1</BreakIfRCount>
+          <Filename>.\Src\tm1638.c</Filename>
+          <ExecCommand></ExecCommand>
+          <Expression>\\CasioDiar\Src/tm1638.c\43</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>
@@ -301,17 +317,17 @@
         <Ww>
           <count>22</count>
           <WinNumber>1</WinNumber>
-          <ItemText>tempBmp,0x0A</ItemText>
+          <ItemText>i</ItemText>
         </Ww>
         <Ww>
           <count>23</count>
           <WinNumber>1</WinNumber>
-          <ItemText>temp10,0x0A</ItemText>
+          <ItemText>ch</ItemText>
         </Ww>
         <Ww>
           <count>24</count>
           <WinNumber>1</WinNumber>
-          <ItemText>temp100,0x0A</ItemText>
+          <ItemText>buffTm1638</ItemText>
         </Ww>
       </WatchWindow1>
       <WatchWindow2>
