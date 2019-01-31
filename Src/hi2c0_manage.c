@@ -14,7 +14,7 @@ static uint16_t uiHumid = 0u;
 
 void hi2c0m_handleTask(void) {
     BMP180_eState bmpState;
-    uint8_t i, j, ch, buff[15];
+    uint8_t i, ch, buff[15];
     float tempBmp;
     
     if((0u == hi2c0m_stateInit) && (true == TIM_delayIsTimerDown(DELAY_MAIN_LCD_TEMP_SHOW))) {
@@ -46,21 +46,29 @@ void hi2c0m_handleTask(void) {
                             ch = buff[i];
                             buffTm1638[i-2u] = ch;
                             if('C' == ch) {
-                                if(buffTm1638[i-3u] == '0') { // if is 25.20°C then last 0 not including
-                                    i--;
-                                    j = 4u;
-                                } else {
-                                    j = 5u;
-                                    }
-                                do {
-                                    buffTm1638[i-2u] = ' ';
-                                    i++;
-                                } while(i < (sizeof(buffTm1638) - 1u));
                                 break;
                             }
                         }
-                        buffTm1638[j++] = 255u; // '°'
-                        buffTm1638[j] = 'C';
+                        if(8u == i) {
+                            if('0' == buffTm1638[5]) {
+                                buffTm1638[5] = 255u; // '°' -> 130.0°C; -15.2°C
+                            }                         // else   -15.25C; 134.99C
+                        } else if((7u == i) && ('0' == buffTm1638[4])) {
+                            buffTm1638[4] = 255u; // '°' -> 25.0°C; -5.2°C
+                            buffTm1638[6] = ' ';
+                        } else if(6u == i) {
+                            if('0' == buffTm1638[3]) {
+                                buffTm1638[3] = 255u; // '°' -> 5.2°C
+                                buffTm1638[5] = ' ';
+                            } else {
+                                buffTm1638[4] = 255u; // '°' -> 5.25°C
+                                buffTm1638[5] = 'C';
+                            }
+                            buffTm1638[6] = ' ';
+                        } else {
+                            buffTm1638[5] = 255u; // '°' -> 25.25°C; -5.25°C
+                            buffTm1638[6] = 'C';
+                        }
                     }
                     break;
                 case 1:
@@ -76,7 +84,6 @@ void hi2c0m_handleTask(void) {
                     break;
                 case 2: 
                     tempBmp = (float)BMP180_getTemperature() / 10;
-                    //sprintf((char*)buff, "T:%d.%dC", (int8_t)(BMP180_getTemperature() / 10u), tempBmp);
                     sprintf((char*)buff, "T:%.1fC", tempBmp);
                     break;
                 case 3: sprintf((char*)buff, "P:%d", (int16_t)BMP180_getPressure()); // no break

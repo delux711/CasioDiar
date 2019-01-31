@@ -157,25 +157,9 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
-          <LineNumber>136</LineNumber>
+          <LineNumber>64</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134223912</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>1</BreakIfRCount>
-          <Filename>.\Src\BMP180_pressure.c</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression>\\CasioDiar\Src/BMP180_pressure.c\136</Expression>
-        </Bp>
-        <Bp>
-          <Number>1</Number>
-          <Type>0</Type>
-          <LineNumber>67</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>134236096</Address>
+          <Address>134236074</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
@@ -184,23 +168,7 @@
           <BreakIfRCount>1</BreakIfRCount>
           <Filename>.\Src\hi2c0_manage.c</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\CasioDiar\Src/hi2c0_manage.c\67</Expression>
-        </Bp>
-        <Bp>
-          <Number>2</Number>
-          <Type>0</Type>
-          <LineNumber>43</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>134241526</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>1</BreakIfRCount>
-          <Filename>.\Src\tm1638.c</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression>\\CasioDiar\Src/tm1638.c\43</Expression>
+          <Expression>\\CasioDiar\Src/hi2c0_manage.c\64</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>
