@@ -18,11 +18,11 @@ void SHT3x_delay(uint16_t time) {
 }
 
 void SHT3x_resetForced(void) {
-    SHT3x_bIsPresent = HI2C0_writeByte(0x30u, true, 0xA2u); // send 0x30A2 to reset
+    SHT3x_bIsPresent = HI2C0_writeByteForced(0x30u, true, 0xA2u); // send 0x30A2 to reset
 }
 
 void SHT3x_statusClearForced(void) {
-    SHT3x_bIsPresent = HI2C0_writeByte(0x30u, true, 0x41u); // send 0X3041 to clear status register
+    SHT3x_bIsPresent = HI2C0_writeByteForced(0x30u, true, 0x41u); // send 0X3041 to clear status register
 }
 
 void SHT3x_vInitForced(void) {
@@ -39,18 +39,20 @@ bool SHT3x_startMeasurementForced(void) {
     bool ret;
     uint8_t crc;
     ret = false;
-    if(true == HI2C0_writeByte(0x2Cu, true, 0x10u)) { // 0x2C-enable clock stretching; 0x10 repeatability Low
-        if(true == HI2C0_bSetAddr(SHT3x_getIdChip() | 0x01u)) { // read
-            SHT3x_delay(20u);
-            SHT3x_uiLastTemperatureRaw = (HI2C0_vTriggerReceive(false) << 8u);
-            SHT3x_uiLastTemperatureRaw |= HI2C0_vTriggerReceive(false);
-            crc = HI2C0_vTriggerReceive(false);
-            if(true == SHT3x_crcCheck(crc)) {
-                SHT3x_uiLastHumidityRaw = (HI2C0_vTriggerReceive(false) << 8u);
-                SHT3x_uiLastHumidityRaw |= HI2C0_vTriggerReceive(false);
-                crc = HI2C0_vTriggerReceive(true);
+    if(SHT3X_STATUS_SLEEP == SHT3x_status) {
+        if(true == HI2C0_writeByteForced(0x2Cu, true, 0x10u)) { // 0x2C-enable clock stretching; 0x10 repeatability Low
+            if(true == HI2C0_bSetAddr(SHT3x_getIdChip() | 0x01u)) { // read
+                SHT3x_delay(20u);
+                SHT3x_uiLastTemperatureRaw = (HI2C0_vTriggerReceive(false) << 8u);
+                SHT3x_uiLastTemperatureRaw |= HI2C0_vTriggerReceive(false);
+                crc = HI2C0_vTriggerReceive(false);
                 if(true == SHT3x_crcCheck(crc)) {
-                    ret = true;
+                    SHT3x_uiLastHumidityRaw = (HI2C0_vTriggerReceive(false) << 8u);
+                    SHT3x_uiLastHumidityRaw |= HI2C0_vTriggerReceive(false);
+                    crc = HI2C0_vTriggerReceive(true);
+                    if(true == SHT3x_crcCheck(crc)) {
+                        ret = true;
+                    }
                 }
             }
         }
@@ -90,10 +92,12 @@ SHT3x_status_t SHT3x_actualState(void) {
 SHT3x_status_t SHT3x_handleTask(void) {
     switch(SHT3x_status) {
         case SHT3X_STATUS_NOT_INIT:
-            HI2C0_vInit(SHT3x_getIdChip());
             SHT3x_vInitForced();
+            SHT3x_status = SHT3X_STATUS_RESET_SEND;
             SHT3x_status = SHT3X_STATUS_SLEEP;
             break;
+        case SHT3X_STATUS_RESET_SEND:
+            
         default: break;
     }
     return SHT3x_status;

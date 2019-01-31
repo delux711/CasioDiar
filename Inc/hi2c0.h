@@ -32,10 +32,10 @@ extern uint8_t HI2C0_ucError;
 extern uint8_t HI2C0_ucLastRx;
 extern bool  HI2C0_bEventEnabled;
 
-extern bool HI2C0_writeByte(uint8_t addr, bool stop, uint8_t data);
-extern bool HI2C0_writeAddr(uint8_t addr, bool stop);
+extern bool HI2C0_writeByteForced(uint8_t addr, bool stop, uint8_t data);
+extern bool HI2C0_writeAddrForced(uint8_t addr, bool stop);
 extern bool HI2C0_isChipPresent(void);
-extern uint8_t HI2C0_readByte(uint8_t addr, bool stop);
+extern uint8_t HI2C0_readByteForced(uint8_t addr, bool stop);
 extern uint8_t HI2C0_getChipAddress(void);
 extern void HI2C0_setChipAddress(uint8_t chipAddress);
 

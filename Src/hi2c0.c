@@ -309,10 +309,10 @@ bool HI2C0_bForceBusRelease(void) {
     return (bSdaStatus);
 }
 
-uint8_t HI2C0_readByte(uint8_t addr, bool stop) {
+uint8_t HI2C0_readByteForced(uint8_t addr, bool stop) {
     uint8_t ret;
     ret = 0u;
-    if(true == HI2C0_writeAddr(addr, true)) {
+    if(true == HI2C0_writeAddrForced(addr, true)) {
         if(true == HI2C0_bSetAddr(ucChipAddr | 0x01u)) { // read
             ret = HI2C0_vTriggerReceive(stop);
         }
@@ -320,10 +320,10 @@ uint8_t HI2C0_readByte(uint8_t addr, bool stop) {
     return ret;
 }
     
-bool HI2C0_writeByte(uint8_t addr, bool stop, uint8_t data) {
+bool HI2C0_writeByteForced(uint8_t addr, bool stop, uint8_t data) {
     bool ret;
     ret = false;
-    if(true == HI2C0_writeAddr(addr, false)) { // write
+    if(true == HI2C0_writeAddrForced(addr, false)) { // write
         if(true == HI2C0_bSetTxData(data, stop)) { // write address
             ret = true;
         }
@@ -331,7 +331,7 @@ bool HI2C0_writeByte(uint8_t addr, bool stop, uint8_t data) {
     return ret;
 }
 
-bool HI2C0_writeAddr(uint8_t addr, bool stop) {
+bool HI2C0_writeAddrForced(uint8_t addr, bool stop) {
     bool ret;
     ret = false;
     if(true == HI2C0_bSetAddr(ucChipAddr)) { // write

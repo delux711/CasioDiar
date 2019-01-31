@@ -10,16 +10,16 @@ void BMP180_calculatePressure(void);
 bool BMP180_startMeasurementForced(BMP180_eOverSample oss);
 
 bool BMP180_isDoneSample(void) {
-    return (0u == (0x20u & HI2C0_readByte(0xF4u, true)));
+    return (0u == (0x20u & HI2C0_readByteForced(0xF4u, true)));
 }
 
 void BMP180_reset(void) {
-    (void)HI2C0_writeByte(0xE0u, true, 0xB6u);   // 0xB6-reset sequence
+    (void)HI2C0_writeByteForced(0xE0u, true, 0xB6u);   // 0xB6-reset sequence
 }
 
 void BMP180_readCalDataForced(void) {
     uint8_t i;
-    if(true == HI2C0_writeAddr(0xAAu, true)) {
+    if(true == HI2C0_writeAddrForced(0xAAu, true)) {
         if(true == HI2C0_bSetAddr(0xEFu)) { // read
             for(i = 0; i < 10u; i++) {
                 sensorPresure.calVal.buff[i] = (HI2C0_vTriggerReceive(false) << 8u);
@@ -33,7 +33,7 @@ void BMP180_readCalDataForced(void) {
 
 bool BMP180_startMeasurementForced(BMP180_eOverSample oss) {
     bool ret;
-    ret = HI2C0_writeByte(0xF4u, true, oss);
+    ret = HI2C0_writeByteForced(0xF4u, true, oss);
     if(true == ret) {
         while(false == BMP180_isDoneSample());
     }
@@ -42,7 +42,7 @@ bool BMP180_startMeasurementForced(BMP180_eOverSample oss) {
 
 void BMP180_readTempForced(void) {
     if(true == BMP180_startMeasurementForced(BMP180_eOverSampleTemperature)) {
-        sensorPresure.UT = (int32_t)(HI2C0_readByte(0xF6u, false) << 8u); // address with temparature
+        sensorPresure.UT = (int32_t)(HI2C0_readByteForced(0xF6u, false) << 8u); // address with temparature
         sensorPresure.UT |= HI2C0_vTriggerReceive(true);
         BMP180_calculateTemperature();
     }
@@ -52,7 +52,7 @@ void BMP180_readPressureAndTempForced(BMP180_eOverSample oss) {
     BMP180_readTempForced();
     if(true == BMP180_startMeasurementForced(oss)) {
         sensorPresure.oss = oss >> 6u;
-        sensorPresure.UP =  (int32_t)(HI2C0_readByte(0xF6u, false) << 16u); // address with MSB pressure - address 0xF6
+        sensorPresure.UP =  (int32_t)(HI2C0_readByteForced(0xF6u, false) << 16u); // address with MSB pressure - address 0xF6
         sensorPresure.UP |= HI2C0_vTriggerReceive(false) << 8u;         // address with LSB pressure - address 0xF7
         sensorPresure.UP |= HI2C0_vTriggerReceive(true);                // address with XLSB pressure - address 0xF8
         BMP180_calculatePressure();
@@ -100,7 +100,7 @@ void BMP180_Init(void) {
     BMP180_bBmp180present = false;
     BMP180_ucReInit = 0u;
     HI2C0_vInit(BMP180_getIdChip());
-    if(0x55u == HI2C0_readByte(0xD0u, true)) {   // 0xD0u - Chip-id
+    if(0x55u == HI2C0_readByteForced(0xD0u, true)) {   // 0xD0u - Chip-id
         BMP180_bBmp180present = HI2C0_isChipPresent();
         BMP180_reset();
         BMP180_readCalDataForced();
@@ -147,7 +147,7 @@ BMP180_eState BMP180_handleTask(void) {
             break;
 
         case BMP180_STATE_MEASUREMENT_START:
-            if(true == HI2C0_writeByte(0xF4u, true, BMP180_eOverSampleTemperature)) {
+            if(true == HI2C0_writeByteForced(0xF4u, true, BMP180_eOverSampleTemperature)) {
                 BMP180_state = BMP180_STATE_TEMPERATURE_WHITE_TO_DONE;
             } else {
                 BMP180_bBmp180present = HI2C0_isChipPresent();
@@ -161,7 +161,7 @@ BMP180_eState BMP180_handleTask(void) {
             }
             break;
         case BMP180_STATE_TEMPERATURE_READ1:
-            sensorPresure.UT = (int32_t)(HI2C0_readByte(0xF6u, false) << 8u); // address with temparature
+            sensorPresure.UT = (int32_t)(HI2C0_readByteForced(0xF6u, false) << 8u); // address with temparature
             BMP180_state++;
             break;
         case BMP180_STATE_TEMPERATURE_READ2:
@@ -174,7 +174,7 @@ BMP180_eState BMP180_handleTask(void) {
             break;
 
         case BMP180_STATE_PRESSURE_START:
-            if(true == HI2C0_writeByte(0xF4u, true, sensorPresure.oss)) {
+            if(true == HI2C0_writeByteForced(0xF4u, true, sensorPresure.oss)) {
                 BMP180_state = BMP180_STATE_PRESSURE_WHITE_TO_DONE;
             } else {
                 BMP180_bBmp180present = HI2C0_isChipPresent();
@@ -189,7 +189,7 @@ BMP180_eState BMP180_handleTask(void) {
             break;
         case BMP180_STATE_PRESSURE_READ1:
             sensorPresure.oss >>= 6u;
-            sensorPresure.UP =  (int32_t)(HI2C0_readByte(0xF6u, false) << 16u); // address with MSB pressure - address 0xF6
+            sensorPresure.UP =  (int32_t)(HI2C0_readByteForced(0xF6u, false) << 16u); // address with MSB pressure - address 0xF6
             BMP180_state++;
             break;
         case BMP180_STATE_PRESSURE_READ2:
