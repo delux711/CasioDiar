@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "mfx_l4.h"
-#include "tm1638_modes.h"
 #include "hi2c0_manage.h"
 
 // SYSCLK - 4MHz
@@ -260,7 +259,6 @@ int main(void) {
         }
 
         hi2c0m_handleTask();
-        TMM_handleTask();
         if(MFX_STATUS_DONE == mfx_handleTask()) {
             TIM_delaySetTimer(DELAY_MAIN_LCD_SHOW, 2500u);
             //sprintf((char*)buff, "%ld", (int32_t)mfx_getData());

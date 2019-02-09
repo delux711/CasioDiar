@@ -242,7 +242,6 @@ void tm1638_readTl(uint8_t *buff) {
 }
 
 void tm1638_initPort(void) {
-    statusTlCount = 0u;
     TM_STB_OUT();
     TM_STB_1();
 
@@ -258,6 +257,7 @@ void tm1638_initPort(void) {
 void tm1638_init(void) {
     uint8_t i;
     statusTl = TM1638_STATUS_TL_NOT_INIT;
+    statusTlCount = 0u;
     tm1638_initPort();
     
     tm1638_sendCommand(TM1638_COMMAND_WRITE_DATA);
@@ -290,6 +290,18 @@ void tm1638_init(void) {
 
 uint8_t tm1638_getTl(void) {
     return statusTlMsk;
+}
+
+void tm1638_communication(bool turnOnOff) {
+    if(false == turnOnOff) { // communication turn off
+        while(TM1638_STATUS_TL_DONE != TM1638_handleTaskTl());
+        statusTl = TM1638_STATUS_COMMUNICATION_OFF;
+        TM_STB_1(); // do not communication tm1638
+    } else {
+        if(TM1638_STATUS_COMMUNICATION_OFF == statusTl) {
+            statusTl = TM1638_STATUS_TL_DONE;
+        }
+    }
 }
 
 /*
@@ -381,6 +393,8 @@ TM1638_status_tl TM1638_handleTaskTl(void) {
         case TM1638_STATUS_TL_NOT_INIT2:
             tm1638_sendCommand(TM1638_COMMAND_LCD_ON_PULSE_1_16);
             statusTl = TM1638_STATUS_TL_WRITE;
+            break;
+        case TM1638_STATUS_COMMUNICATION_OFF:
             break;
         default: break;
     }

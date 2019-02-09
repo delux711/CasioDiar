@@ -112,4 +112,5 @@ void hi2c0m_handleTask(void) {
             }
         }
     }
+    TMM_handleTask();
 }

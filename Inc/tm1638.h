@@ -6,8 +6,8 @@
 
 /* This pin is output */
 #define TM_STB_OUT()     TM_STB_OUT_MAP(E,13)
-#define TM_STB_0()       TM_STB_0_MAP(E,13)
-#define TM_STB_1()       TM_STB_1_MAP(E,13)
+#define TM_STB_0()       TM_STB_0_MAP(E,13)     // chip is used for bus
+#define TM_STB_1()       TM_STB_1_MAP(E,13)     // do not communication
 
 /* This pin is output */
 #define TM_CLK_OUT()     TM_CLK_OUT_MAP(E,14)
@@ -55,7 +55,8 @@ typedef enum _TM1638_status_tl {
     TM1638_STATUS_TL_READ_DONE,
     /* Must be together! */
     TM1638_STATUS_TL_CALC,
-    TM1638_STATUS_TL_DONE
+    TM1638_STATUS_TL_DONE,
+    TM1638_STATUS_COMMUNICATION_OFF
 } TM1638_status_tl;
 
 
@@ -85,5 +86,6 @@ extern void tm1638_sendPacket(uint8_t *buff, uint8_t size);
 extern void tm1638_show(uint8_t *buff);
 extern void tm1638_showPos(uint8_t position, uint8_t ch);
 extern void tm1638_readTl(uint8_t *buff);
+extern void tm1638_communication(bool turnOnOff);
 
 #endif
