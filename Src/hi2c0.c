@@ -19,55 +19,55 @@ static void HI2C0_vMakeStopCondition(void);
 
 void HI2C0_vInitPort(void) {
     RCC->AHB2ENR |= RCC_AHB2ENR_GPIOBEN;      /* enable clock for GPIOx */
-    GPIOB->OTYPER &= ~(GPIO_OTYPER_OT7);
-    GPIOB->OTYPER |= (1u << GPIO_OTYPER_OT7_Pos);
-    GPIOB->PUPDR &= ~(GPIO_PUPDR_PUPD7);
-    GPIOB->PUPDR |= (1u << GPIO_PUPDR_PUPD7_Pos); // pull-up   
+    GPIOE->OTYPER &= ~(GPIO_OTYPER_OT15);
+    GPIOE->OTYPER |= (1u << GPIO_OTYPER_OT15_Pos);
+    GPIOE->PUPDR &= ~(GPIO_PUPDR_PUPD15);
+    GPIOE->PUPDR |= (1u << GPIO_PUPDR_PUPD15_Pos); // pull-up   
 }
 
 
 void HI2C0_vOutputSCL(void) {
-    GPIOB->MODER &= ~(GPIO_MODER_MODE6);
-    GPIOB->MODER |= (1U << GPIO_MODER_MODE6_Pos);
+    GPIOE->MODER &= ~(GPIO_MODER_MODE14);
+    GPIOE->MODER |= (1U << GPIO_MODER_MODE14_Pos);
 }
 
 void HI2C0_vInputSCL(void) {
-    GPIOB->MODER &= ~(GPIO_MODER_MODE6);
-    GPIOB->MODER |= (0U << GPIO_MODER_MODE6_Pos);
+    GPIOE->MODER &= ~(GPIO_MODER_MODE14);
+    GPIOE->MODER |= (0U << GPIO_MODER_MODE14_Pos);
 }
 
 void HI2C0_vClrSCL(void) {
-    GPIOB->BSRR |= GPIO_BSRR_BR6;
+    GPIOE->BSRR |= GPIO_BSRR_BR14;
 }
 
 void HI2C0_vSetSCL(void) {
-    GPIOB->BSRR |= GPIO_BSRR_BS6;
+    GPIOE->BSRR |= GPIO_BSRR_BS14;
 }
 
 bool HI2C0_bGetSCL(void) {
-    return GPIOB->IDR & GPIO_IDR_ID6;
+    return GPIOE->IDR & GPIO_IDR_ID14;
 }
 
 void HI2C0_vOutputSDA(void) {
-    GPIOB->MODER &= ~(GPIO_MODER_MODE7);
-    GPIOB->MODER |= (1U << GPIO_MODER_MODE7_Pos);
+    GPIOE->MODER &= ~(GPIO_MODER_MODE15);
+    GPIOE->MODER |= (1U << GPIO_MODER_MODE15_Pos);
 }
 
 void HI2C0_vInputSDA(void) {
-    GPIOB->MODER &= ~(GPIO_MODER_MODE7);
-    GPIOB->MODER |= (0U << GPIO_MODER_MODE7_Pos);
+    GPIOE->MODER &= ~(GPIO_MODER_MODE15);
+    GPIOE->MODER |= (0U << GPIO_MODER_MODE15_Pos);
 }
 
 void HI2C0_vClrSDA(void) {
-   GPIOB->BSRR |= GPIO_BSRR_BR7;
+   GPIOE->BSRR |= GPIO_BSRR_BR15;
 }
 
 void HI2C0_vSetSDA(void) {
-   GPIOB->BSRR |= GPIO_BSRR_BS7;
+   GPIOE->BSRR |= GPIO_BSRR_BS15;
 }
 
 bool HI2C0_bGetSDA(void) {
-    return GPIOB->IDR & GPIO_IDR_ID7;
+    return GPIOE->IDR & GPIO_IDR_ID15;
 }
 
 

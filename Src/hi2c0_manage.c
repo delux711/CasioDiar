@@ -48,7 +48,8 @@ void hi2c0m_handleTask(void) {
     uint8_t buff[15];
     float tempBmp;
 
-    if((0u == hi2c0m_stateInit) && (true == TIM_delayIsTimerDown(DELAY_MAIN_LCD_TEMP_SHOW))) {
+    if((0u == hi2c0m_stateInit) && (true == TIM_delayIsTimerDown(DELAY_MAIN_LCD_TEMP_SHOW)) &&
+                                    (TM1638_STATUS_COMMUNICATION_OFF == TM1638_actualState())) {
         if((BMP180_STATE_SLEEP == BMP180_actualState()) && (false == hi2c0m_humidityShow)) {
             HI2C0_setChipAddress(SHT3x_getIdChip());
             if(true == SHT3x_startMeasurementForced()) {
@@ -57,7 +58,7 @@ void hi2c0m_handleTask(void) {
             }
         } else if((SHT3X_STATUS_SLEEP == SHT3x_actualState()) && (false == hi2c0m_tempShow)) {
             HI2C0_setChipAddress(BMP180_getIdChip());
-            bmpState = BMP180_handleTask();
+            bmpState = BMP180_actualState();
             if(true == BMP180_isPresent()) {
                 if(BMP180_STATE_SLEEP == bmpState) {
                     hi2c0m_tempShow = true;
@@ -101,16 +102,28 @@ void hi2c0m_handleTask(void) {
             }
             LCD_GLASS_DisplayString((uint8_t*) buff);
         }
-    } else {
+    }
+    if(TM1638_STATUS_COMMUNICATION_OFF == TM1638_actualState()) {
         if(0u != (HI2CM_STATE_INIT_BMP180 & hi2c0m_stateInit)) {
+            HI2C0_setChipAddress(BMP180_getIdChip());
             if(BMP180_STATE_SLEEP == BMP180_handleTask()) {
                 hi2c0m_stateInit &= ~HI2CM_STATE_INIT_BMP180;
             }
         } else if(0u != (HI2CM_STATE_INIT_SHT3X & hi2c0m_stateInit)) {
+            HI2C0_setChipAddress(SHT3x_getIdChip());
             if(SHT3X_STATUS_SLEEP == SHT3x_handleTask()) {
                 hi2c0m_stateInit &= ~HI2CM_STATE_INIT_SHT3X;
             }
+        } else if(0u == hi2c0m_stateInit) {
+            tm1638_communication(true);
+        }
+    } else {
+        hi2c0m_stateInit = (HI2CM_STATE_INIT_BMP180 | HI2CM_STATE_INIT_SHT3X);
+        TMM_handleTask();
+        if(TM1638_STATUS_TL_DONE == TM1638_actualState()) {
+            tm1638_communication(false);
+            HI2C0_vInitPort();
+            hi2c0m_stateInit = (HI2CM_STATE_INIT_BMP180 | HI2CM_STATE_INIT_SHT3X);
         }
     }
-    TMM_handleTask();
 }

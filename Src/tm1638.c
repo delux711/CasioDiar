@@ -6,7 +6,6 @@ static uint8_t tm_savePosition;
 static uint8_t tm_saveChar;
 static uint8_t tm_data[16];
 static TM1638_status_tl statusTl = TM1638_STATUS_TL_NOT_INIT;
-static uint8_t statusTlCount;
 static uint8_t statusTlBuff[4];
 static uint8_t statusTlMsk;
 
@@ -257,7 +256,7 @@ void tm1638_initPort(void) {
 void tm1638_init(void) {
     uint8_t i;
     statusTl = TM1638_STATUS_TL_NOT_INIT;
-    statusTlCount = 0u;
+    TIM_delaySetTimer(DELAY_TM1638_TASK_TL, TM1638_MAX_TIME_NEXT_MEASUREMENT);
     tm1638_initPort();
     
     tm1638_sendCommand(TM1638_COMMAND_WRITE_DATA);
@@ -300,8 +299,13 @@ void tm1638_communication(bool turnOnOff) {
     } else {
         if(TM1638_STATUS_COMMUNICATION_OFF == statusTl) {
             statusTl = TM1638_STATUS_TL_DONE;
+            tm1638_initPort();
         }
     }
+}
+
+TM1638_status_tl TM1638_actualState(void) {
+    return statusTl;
 }
 
 /*
@@ -328,10 +332,8 @@ TM1638_status_tl TM1638_handleTaskTl(void) {
     bool pin;
     switch(statusTl) {
         case TM1638_STATUS_TL_DONE:
-            if(statusTlCount < TM1638_MAX_DONE_COUNT) {
-                statusTlCount++;
-            } else {
-                statusTlCount = 0u;
+            if(TIM_delayIsTimerDown(DELAY_TM1638_TASK_TL) == true) {
+                TIM_delaySetTimer(DELAY_TM1638_TASK_TL, TM1638_MAX_TIME_NEXT_MEASUREMENT);
                 statusTl = TM1638_STATUS_TL_WRITE;
             }
             if(true == tm_isDataToSend) {
@@ -385,7 +387,6 @@ TM1638_status_tl TM1638_handleTaskTl(void) {
             statusTl = TM1638_STATUS_TL_DONE;
             break;
         case TM1638_STATUS_TL_NOT_INIT:
-            statusTlCount = 0u;
             tm1638_initPort();
             tm1638_sendCommand(TM1638_COMMAND_WRITE_DATA);
             statusTl = TM1638_STATUS_TL_NOT_INIT2;

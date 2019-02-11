@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "stm32l4xx.h"
+#include "timerLib.h"
 
 /* This pin is output */
 #define TM_STB_OUT()     TM_STB_OUT_MAP(E,13)
@@ -41,7 +42,7 @@ HSB    MSB  HSB    MSB    (1-LEDy)
    SEG1     SEG2     SEG3     SEG4     SEG5     SEG6     SEG7     SEG8
 */
 
-#define TM1638_MAX_DONE_COUNT   (20u)
+#define TM1638_MAX_TIME_NEXT_MEASUREMENT   (50u)
 
 typedef enum _TM1638_status_tl {
     TM1638_STATUS_TL_NOT_INIT,
@@ -78,6 +79,7 @@ typedef enum _TM1638_status_tl {
 #define TM1638_COMMAND_LCD_ON_MAX            (0x8Fu)
 
 extern TM1638_status_tl TM1638_handleTaskTl(void);
+extern TM1638_status_tl TM1638_actualState(void);
 extern uint8_t tm1638_getTl(void);
 extern void tm1638_showLed(uint8_t led);
 extern void tm1638_init(void);
