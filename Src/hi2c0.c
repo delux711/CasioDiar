@@ -23,6 +23,11 @@ void HI2C0_vInitPort(void) {
     GPIOE->OTYPER |= (1u << GPIO_OTYPER_OT15_Pos);
     GPIOE->PUPDR &= ~(GPIO_PUPDR_PUPD15);
     GPIOE->PUPDR |= (1u << GPIO_PUPDR_PUPD15_Pos); // pull-up   
+    GPIOE->PUPDR |= (1u << GPIO_PUPDR_PUPD14_Pos); // pull-up   
+
+    /* preset for port latch */
+    HI2C0_vInputSCL();
+    HI2C0_vInputSDA();
 }
 
 
@@ -139,12 +144,7 @@ static void HI2C0_vMakeStopCondition(void) {
 
 void HI2C0_vInit(uint8_t chipAddress) {
     HI2C0_setChipAddress(chipAddress);
-#ifdef HI2C_SPECIAL_INIT 
     HI2C0_vInitPort(); /* Initialize the special features of the periphery. */
-#endif
-    /* preset for port latch */
-    HI2C0_vInputSCL();
-    HI2C0_vInputSDA();
 }
 
 bool HI2C0_bSetAddr(uint8_t ucAddress) {

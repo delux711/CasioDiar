@@ -26,6 +26,7 @@ void SHT3x_statusClearForced(void) {
 }
 
 void SHT3x_vInitForced(void) {
+    SHT3x_bIsPresent = false;
     SHT3x_uiLastTemperatureRaw = 0u;
     SHT3x_uiLastHumidityRaw = 0u;
     HI2C0_vInit(SHT3x_getIdChip());
@@ -57,6 +58,7 @@ bool SHT3x_startMeasurementForced(void) {
             }
         }
     }
+    SHT3x_bIsPresent = ret;
     return ret;
 }
 
@@ -91,13 +93,26 @@ SHT3x_status_t SHT3x_actualState(void) {
 
 SHT3x_status_t SHT3x_handleTask(void) {
     switch(SHT3x_status) {
+        case SHT3X_STATUS_SLEEP:
+            if(false == SHT3x_isPresent()) {
+                SHT3x_status = SHT3X_STATUS_NOT_PRESENT;
+            }
+            break;
         case SHT3X_STATUS_NOT_INIT:
             SHT3x_vInitForced();
-            SHT3x_status = SHT3X_STATUS_RESET_SEND;
-            SHT3x_status = SHT3X_STATUS_SLEEP;
+            if(true == SHT3x_bIsPresent) {
+                SHT3x_status = SHT3X_STATUS_SLEEP;
+            } else {
+                SHT3x_status = SHT3X_STATUS_NOT_PRESENT;
+            }
             break;
         case SHT3X_STATUS_RESET_SEND:
-            
+        case SHT3X_STATUS_NOT_PRESENT:
+            if(true ==  TIM_delayIsTimerDown(DELAY_SHT3X_GLOBAL)) {
+                TIM_delaySetTimer(DELAY_SHT3X_GLOBAL, SHT3X_MAX_PRESENT_REINIT);
+                SHT3x_status = SHT3X_STATUS_NOT_INIT;
+            }
+            break;
         default: break;
     }
     return SHT3x_status;

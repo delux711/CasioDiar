@@ -23,6 +23,7 @@ typedef enum {
     DELAY_TM1638_TASK_TL,
     DELAY_SHT3X_GLOBAL,
     DELAY_SHT3X_SHOW,
+    DELAY_BMP180_REINIT,
     DELAY_TIMER_END
 } TIM_EN_delayTimers;
 

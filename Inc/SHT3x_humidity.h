@@ -7,9 +7,12 @@
 #include "hi2c0.h"
 #include "timerLib.h"
 
+#define SHT3X_MAX_PRESENT_REINIT   (100u)
+
 typedef enum _SHT3x_status_t {
-    SHT3X_STATUS_NOT_INIT,
     SHT3X_STATUS_SLEEP,
+    SHT3X_STATUS_NOT_INIT,
+    SHT3X_STATUS_NOT_PRESENT,
     SHT3X_STATUS_RESET_SEND,
     SHT3X_STATUS_RESET_WAIT,
     /* must be behind start*/

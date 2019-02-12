@@ -53,7 +53,6 @@ extern void HI2C0_setChipAddress(uint8_t chipAddress);
 \param none
 \return none
 */
-#define HI2C_SPECIAL_INIT
 extern void HI2C0_vInitPort(void);
 
 

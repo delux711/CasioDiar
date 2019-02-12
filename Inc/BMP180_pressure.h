@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "hi2c0.h"
+#include "timerLib.h"
+
+#define BMP180_MAX_PRESENT_REINIT   (100u)
 
 typedef union _BMP180_calVal {
     uint16_t buff[11];
