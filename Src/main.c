@@ -24,6 +24,7 @@ uint8_t charsToHex(uint8_t ch1, uint8_t ch2);
 void charToHexString(uint8_t* buff, uint8_t ch);
 void run_in_ram(void);
 void load_ramcode(void);
+void spMain(void);
 extern char Image$$RW_CODE$$Base;        // kvoli testovaniu volania funkcie z RAM
 extern char Image$$RW_CODE$$Length; // kvoli testovaniu volania funkcie z RAM
 extern char Load$$RW_CODE$$Base;        // kvoli testovaniu volania funkcie z RAM
@@ -58,19 +59,56 @@ void charToHexString(uint8_t* buff, uint8_t ch) {
     }
 }
 
-/*
-static uint64_t *lcdRam1;
-static uint64_t *lcdRam2;
-static uint64_t *lcdRam3;
-static uint64_t *lcdRam4;
-static uint8_t data[] = { 'A', 255, 255, 255, 255, 255 };*/
-static uint8_t testDiar[] = { "Ing.Pavol Pusztai, Slovinska 1, 05342 Krompachy." };
+static const uint8_t buffSpHelp[] = { "\r\nTM1638:\r\n s->sendCommand2\r\n d->show\r\n a->showPos\r\n p->sendPacket\r\n r->readTl\r\n" };
+static const uint8_t buffSpHelpDef[] = { "\r\nFor help press 'h' and ENTER\r\n"};
 static uint8_t receiveBuff[50];
 static uint8_t receiveP = 0;
+void spMain(void) {
+    uint8_t i, j, ch;
+    ch = SP_getData();
+    if((ch == '\r') || (18u < receiveP)) {
+        receiveBuff[receiveP++] = '\0';
+        LCD_GLASS_DisplayString(receiveBuff);
+        (void)SP_sendString(receiveBuff);
+        TIM_delaySetTimer(DELAY_MAIN_LCD_SHOW, 2000u);
+        if('d' == receiveBuff[0]) {
+            tm1638_show(&receiveBuff[1]);
+        } else if('a' == receiveBuff[0]) {
+            i = receiveBuff[1] & 0x0Fu;
+            tm1638_showPos(i, receiveBuff[2]);
+        } else if('p' == receiveBuff[0]) {
+            i = 0u;
+            j = 1u;
+            ch = (receiveP - 1u) / 2u;
+            for(i = 0u; i < ch; i++) {
+                receiveBuff[i] = charsToHex(receiveBuff[j], receiveBuff[j + 1u]);
+                j += 2u;
+            }
+            tm1638_sendPacket(receiveBuff, ch);
+        } else if('r' == receiveBuff[0]) {
+            tm1638_readTl(receiveBuff);
+            for(i = 0; i < 4u; i++) {
+                charToHexString(&receiveBuff[(i * 2u) + 4u], receiveBuff[i]);
+            }
+            (void)SP_sendBuff(&receiveBuff[4], 8u);
+        } else if('h' == receiveBuff[0]) {
+            (void)SP_sendString((uint8_t*)buffSpHelp);
+        } else if('s' == receiveBuff[receiveP - 3u]) {
+            tm1638_sendCommand(charsToHex(receiveBuff[receiveP - 2u], receiveBuff[receiveP - 1u]));
+        } else {
+            (void)SP_sendString((uint8_t*)buffSpHelpDef);
+        }
+        receiveP = 0u;
+        TIM_delaySetTimer(DELAY_TM1638, 3000u);
+    } else {
+        receiveBuff[receiveP++] = ch;
+    }
+}
+
+static uint8_t testDiar[] = { "Ing.Pavol Pusztai, Slovinska 1, 05342 Krompachy." };
 int main(void) {
     bool lcdIsShift;
     bool cdNewData = false;
-    uint8_t i, j, ch;
     uint8_t buff[50];
     uint8_t cd_buff[300];
     uint32_t count = 0;
@@ -113,75 +151,24 @@ int main(void) {
     }
     count = 0u;
 
-    //LCD_GLASS_DisplayString((uint8_t *)"A");
-    /*    LCD_GLASS_DisplayString(data);
-    lcdRam1 = (uint64_t*) &LCD->RAM[0];
-    lcdRam2 = (uint64_t*) &LCD->RAM[2];
-    lcdRam3 = (uint64_t*) &LCD->RAM[4];
-    lcdRam4 = (uint64_t*) &LCD->RAM[6];
-    if(*lcdRam1 && *lcdRam2 && *lcdRam3 && *lcdRam4) {
-    }*/
-    printf("\nTestovanie\n");
+    printf("\r\nTestovanie\r\n");
+    (void)SP_sendString((uint8_t*)buffSpHelpDef);
     RCC->AHB2ENR |= RCC_AHB2ENR_GPIODEN;
     // USART_TX for debug -> PD5
     // USART_RX for debug -> PD6
     //GPIOD->MODER &= (~(GPIO_MODER_MODE5 | GPIO_MODER_MODE6)); // as INPUT - debug USART do not work
     
-    sprintf((char*)buff, "%06d", count);
-    LCD_GLASS_DisplayString(buff);
-    if(tl_getTl().stred) {
-        i = 0u;
-        for(ch = ('a'-1U); ch < ('z'+1u); ch++) {
-            buff[i++] = ch;
-        }
-        buff[i] = '\0';
-        LCD_GLASS_DisplayString(buff);
-    }
     while(1) {
         TIM_handleTask();
         lcdIsShift = MX_LCD_Task();
         if(SP_isNewData() == true) {
-            ch = SP_getData();
-            if((ch == '\r') || (18u < receiveP)) {
-                receiveBuff[receiveP++] = '\0';
-                LCD_GLASS_DisplayString(receiveBuff);
-                (void)SP_sendString(receiveBuff);
-                TIM_delaySetTimer(DELAY_MAIN_LCD_SHOW, 2000u);
-                if('s' == receiveBuff[receiveP - 3u]) {
-                    tm1638_sendCommand(charsToHex(receiveBuff[receiveP - 2u], receiveBuff[receiveP - 1u]));
-                } else if('d' == receiveBuff[0]) {
-                    tm1638_show(&receiveBuff[1]);
-                } else if('a' == receiveBuff[0]) {
-                    i = receiveBuff[1] & 0x0Fu;
-                    tm1638_showPos(i, receiveBuff[2]);
-                } else if('p' == receiveBuff[0]) {
-                    i = 0u;
-                    j = 1u;
-                    ch = (receiveP - 1u) / 2u;
-                    for(i = 0u; i < ch; i++) {
-                        receiveBuff[i] = charsToHex(receiveBuff[j], receiveBuff[j + 1u]);
-                        j += 2u;
-                    }
-                    tm1638_sendPacket(receiveBuff, ch);
-                } else if('r' == receiveBuff[0]) {
-                    tm1638_readTl(receiveBuff);
-                    for(i = 0; i < 4u; i++) {
-                        charToHexString(&receiveBuff[(i * 2u) + 4u], receiveBuff[i]);
-                    }
-                    (void)SP_sendBuff(&receiveBuff[4], 8u);
-                }
-                receiveP = 0u;
-                TIM_delaySetTimer(DELAY_TM1638, 3000u);
-            } else {
-                receiveBuff[receiveP++] = ch;
-            }
+            spMain();
         }
         if(TIM_delayIsTimerDown(DELAY_MAIN_LCD_SHOW) == true) {
             if((myRtcIsNewTime() == true) && (lcdIsShift == false)) {
                 myRtcSaveActualTime();
                 myRtcGetTimeString(buff);
                 LCD_GLASS_DisplayString(buff);
-                //LCD_GLASS_DisplayStringTime(buff);
             }
         }
         switch(CD_task()) {
@@ -199,10 +186,6 @@ int main(void) {
             case CD_STATE_SENDED_REMINDER2: LCD_GLASS_DisplayString((uint8_t*) "REMINDER ");  break;
             case CD_STATE_SENDED_FREE_FILE: LCD_GLASS_DisplayString((uint8_t*) "FREE FILE "); break;
             case CD_STATE_SENDED_DATA:
-                /*
-                myRtcSetTime(CD_getBuffer());
-                sprintf((char*)buff, "Set time to: %s", CD_getBuffer());
-                LCD_GLASS_DisplayString(buff);*/
                 cdNewData = true;
                 TIM_delaySetTimer(DELAY_MAIN_CASIO_NEW_DATA, 1500u);
                 break;
@@ -216,15 +199,10 @@ int main(void) {
         }
 
         if(tl_getTlSample().hore) {
-            //led1_on();
             foo++;
             CD_sendToDiarConst(0u);
             TIM_delaySetTimer(DELAY_TM1638, 3000u);
             tm1638_show("abcdEFGH");
-            //run_in_ram();
-            
-        } else {
-            //led1_off();
         }
         if(tl_getTlSample().lavo) {
             myRtcGetTime((uint8_t *)buff);
@@ -233,7 +211,6 @@ int main(void) {
             mfx_iddReqMeas(10u);
         }
         if(tl_getTlSample().pravo) {
-            //CD_sendToDiarConst(testDiar);
             (void)CD_receive();
             TIM_delaySetTimer(DELAY_TM1638, 3000u);
             tm1638_show("456789-.");

@@ -123,7 +123,6 @@ uint8_t SP_pPlus(void) {
 }
 
 void SP_init(void) {
-    uint8_t i;
     RCC->AHB2ENR |= RCC_AHB2ENR_GPIOBEN;
     GPIOB->MODER &= ~(GPIO_MODER_MODE6_Msk);
     GPIOB->MODER |= (1U << GPIO_MODER_MODE6_Pos);
@@ -151,8 +150,8 @@ void SP_init(void) {
     USART2->CR1 |= USART_CR1_RXNEIE;
     /* Set the global interrupt into enabled state. */
     //NVIC_EnableIRQ(USART2_IRQn);
-    for(i = 0; i < 15; i++)
-        fputc((int)(i+'A'), &__stdout);
+    // fputc((int)'\r', &__stdout);
+    // fputc((int)'\n', &__stdout);
 }
 
 bool SP_isNewData(void) {
