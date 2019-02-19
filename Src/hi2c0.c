@@ -4,11 +4,20 @@
 /* maximum waitstate delay */
 const uint8_t HI2C0_ucMaxWaitState = 0xFF;
 
-static uint8_t ucChipAddr;
+static uint8_t HI2C0_ucChipAddr = 0u;
 static uint8_t HI2C0_ucError;
 static uint8_t HI2C0_ucLastRx;
 static bool HI2C0_bEventEnabled;
-static bool bIsChippresent = false;
+static bool HI2C0_bIsChippresent = false;
+
+// HandleTask access variables
+static HI2C0_eState HI2C0_state = HI2C0_STATE_NOT_INIT;
+static HI2C0_eState HI2C0_writeAddrBackState = HI2C0_STATE_NOT_INIT;
+static uint8_t HI2C0_ucLastReadData = 0u;
+static uint8_t HI2C0_ucAddr;
+static uint8_t HI2C0_ucData;
+static bool HI2C0_bStop;
+
 
 /* FUNCTIONS */
 static void HI2C0_vWaitForSlave(void);
@@ -147,7 +156,7 @@ void HI2C0_vInit(uint8_t chipAddress) {
     HI2C0_vInitPort(); /* Initialize the special features of the periphery. */
 }
 
-bool HI2C0_bSetAddr(uint8_t ucAddress) {
+bool HI2C0_bSetAddrForced(uint8_t ucAddress) {
     /* no errors so far */
     HI2C0_ucError = 0u;
 
@@ -313,7 +322,7 @@ uint8_t HI2C0_readByteForced(uint8_t addr, bool stop) {
     uint8_t ret;
     ret = 0u;
     if(true == HI2C0_writeAddrForced(addr, true)) {
-        if(true == HI2C0_bSetAddr(ucChipAddr | 0x01u)) { // read
+        if(true == HI2C0_bSetAddrForced(HI2C0_ucChipAddr | 0x01u)) { // read
             ret = HI2C0_vTriggerReceive(stop);
         }
     }
@@ -334,27 +343,137 @@ bool HI2C0_writeByteForced(uint8_t addr, bool stop, uint8_t data) {
 bool HI2C0_writeAddrForced(uint8_t addr, bool stop) {
     bool ret;
     ret = false;
-    if(true == HI2C0_bSetAddr(ucChipAddr)) { // write
-        bIsChippresent = true;
+    if(true == HI2C0_bSetAddrForced(HI2C0_ucChipAddr)) { // write
+        HI2C0_bIsChippresent = true;
         if(true == HI2C0_bSetTxData(addr, stop)) { // write address
             ret = true;
         } else {
-            bIsChippresent = false;
+            HI2C0_bIsChippresent = false;
         }
     } else {
-        bIsChippresent = false;
+        HI2C0_bIsChippresent = false;
     }
     return ret;
 }
 
+HI2C0_eState HI2C_eHandleTask(void) {
+    switch(HI2C0_state) {
+        case HI2C0_STATE_DONE:
+            break;
+        case HI2C0_STATE_WRITE_ADDR:
+            /* no errors so far */
+            HI2C0_ucError = 0u;
+            HI2C0_vSetSDA();
+            HI2C0_vSetSCL();
+            /* generate start condition */
+            HI2C0_vOutputSDA();
+            HI2C0_vOutputSCL();
+            HI2C0_vBitDelayH();
+            HI2C0_vClrSDA()   ;
+            HI2C0_vBitDelayH();
+            HI2C0_vClrSCL()   ;
+            HI2C0_vBitDelayL();
+            HI2C0_state = HI2C0_STATE_WRITE_ADDR_CHIPID;
+            break;
+        case HI2C0_STATE_WRITE_ADDR_CHIPID:
+            /* transmit address */
+            if(true == HI2C0_bSetTxData(HI2C0_ucChipAddr, 0u)) {
+                HI2C0_bIsChippresent = true;
+                HI2C0_state = HI2C0_STATE_WRITE_ADDR_SEND;
+            } else {
+                HI2C0_state = HI2C0_STATE_ERROR;
+            }
+            break;
+        case HI2C0_STATE_WRITE_ADDR_SEND:
+            if(true == HI2C0_bSetTxData(HI2C0_ucAddr, HI2C0_bStop)) {
+                HI2C0_state = HI2C0_writeAddrBackState;
+            } else {
+                HI2C0_state = HI2C0_STATE_ERROR;
+            }
+            break;
+
+        case HI2C0_STATE_WRITE_BYTE:
+            if(true == HI2C0_bSetTxData(HI2C0_ucData, HI2C0_bStop)) { // write data to address
+                HI2C0_state = HI2C0_STATE_WRITE_DONE;
+            } else {
+                HI2C0_state = HI2C0_STATE_ERROR;
+            }
+            break;
+        case HI2C0_STATE_WRITE_DONE:
+            break;
+
+        case HI2C0_STATE_READ_BYTE:
+            HI2C0_ucChipAddr |= 0x01u;  // read;
+            HI2C0_writeAddrBackState = HI2C0_STATE_READ_BYTE_ADDR;
+            HI2C0_state = HI2C0_STATE_WRITE_ADDR;
+            break;
+        case HI2C0_STATE_READ_BYTE_ADDR:
+            HI2C0_ucChipAddr &= ~0x01u; // back to write
+            HI2C0_ucLastReadData = HI2C0_vTriggerReceive(HI2C0_bStop);
+            HI2C0_state = HI2C0_STATE_READ_DONE;
+            break;
+
+        case HI2C0_STATE_NOT_INIT:
+            HI2C0_vInit(HI2C0_ucChipAddr);
+            HI2C0_state = HI2C0_STATE_DONE;
+            break;
+        case HI2C0_STATE_ERROR: // NO BREAK!
+        default:
+            HI2C0_state = HI2C0_STATE_NOT_INIT;
+            HI2C0_bIsChippresent = false;
+            HI2C0_ucChipAddr &= ~0x01u; // write
+            break;
+    }
+    return HI2C0_state;
+}
+
+HI2C0_eState HI2C_eActualState(void) {
+    return HI2C0_state;
+}
+
+bool HI2C0_writeByte(uint8_t addr, bool stop, uint8_t data) {
+    bool ret;
+    ret = false;
+    if(HI2C0_STATE_WRITE_DONE == HI2C0_state) {
+        HI2C0_state = HI2C0_STATE_DONE;
+        ret = true;
+    } else if(HI2C0_STATE_DONE == HI2C0_state) {
+        HI2C0_ucAddr = addr;
+        HI2C0_ucData = data;
+        HI2C0_bStop = stop;
+        HI2C0_writeAddrBackState = HI2C0_STATE_WRITE_BYTE;
+        HI2C0_state = HI2C0_STATE_WRITE_ADDR;
+    }
+    return ret;
+}
+
+bool HI2C0_readByte(uint8_t addr, bool stop) {
+    bool ret;
+    ret = false;
+    if(HI2C0_STATE_READ_DONE == HI2C0_state) {
+        HI2C0_state = HI2C0_STATE_DONE;
+        ret = true;
+    } else if(HI2C0_STATE_DONE == HI2C0_state) {
+        HI2C0_ucAddr = addr;
+        HI2C0_bStop = stop;
+        HI2C0_writeAddrBackState = HI2C0_STATE_READ_BYTE;
+        HI2C0_state = HI2C0_STATE_WRITE_ADDR;
+    }
+    return ret;
+}
+
+uint8_t HI2C0_readLastByte(void) {
+    return HI2C0_ucLastReadData;
+}
+
 void HI2C0_setChipAddress(uint8_t chipAddress) {
-    ucChipAddr = (0xFEu & chipAddress);
+    HI2C0_ucChipAddr = (0xFEu & chipAddress);
 }
 
 uint8_t HI2C0_getChipAddress(void) {
-    return ucChipAddr;
+    return HI2C0_ucChipAddr;
 }
 
 bool HI2C0_isChipPresent(void) {
-    return bIsChippresent;
+    return HI2C0_bIsChippresent;
 }

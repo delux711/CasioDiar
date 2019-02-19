@@ -19,7 +19,7 @@ void BMP180_reset(void) {
 void BMP180_readCalDataForced(void) {
     uint8_t i;
     if(true == HI2C0_writeAddrForced(0xAAu, true)) {
-        if(true == HI2C0_bSetAddr(0xEFu)) { // read
+        if(true == HI2C0_bSetAddrForced(0xEFu)) { // read
             for(i = 0; i < 10u; i++) {
                 sensorPresure.calVal.buff[i] = (HI2C0_vTriggerReceive(false) << 8u);
                 sensorPresure.calVal.buff[i] |= HI2C0_vTriggerReceive(false);

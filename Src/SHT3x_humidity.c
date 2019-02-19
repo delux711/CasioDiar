@@ -42,7 +42,7 @@ bool SHT3x_startMeasurementForced(void) {
     ret = false;
     if(SHT3X_STATUS_SLEEP == SHT3x_status) {
         if(true == HI2C0_writeByteForced(0x2Cu, true, 0x10u)) { // 0x2C-enable clock stretching; 0x10 repeatability Low
-            if(true == HI2C0_bSetAddr(SHT3x_getIdChip() | 0x01u)) { // read
+            if(true == HI2C0_bSetAddrForced(SHT3x_getIdChip() | 0x01u)) { // read
                 SHT3x_delay(20u);
                 SHT3x_uiLastTemperatureRaw = (HI2C0_vTriggerReceive(false) << 8u);
                 SHT3x_uiLastTemperatureRaw |= HI2C0_vTriggerReceive(false);

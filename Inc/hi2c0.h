@@ -19,6 +19,46 @@
 */
 #define HI2C0_TIMEOUT (1u<<1u)
 
+typedef enum _HI2C0_eState {
+    HI2C0_STATE_NOT_INIT,
+    HI2C0_STATE_DONE,
+    HI2C0_STATE_ERROR,
+    /* States for selection of chip */
+    HI2C0_STATE_WRITE_ADDR,
+    HI2C0_STATE_WRITE_ADDR_CHIPID,
+    HI2C0_STATE_WRITE_ADDR_SEND,
+    /* State for write */
+    HI2C0_STATE_WRITE_BYTE,
+    HI2C0_STATE_WRITE_DONE,
+    /* State for read */
+    HI2C0_STATE_READ_BYTE,
+    HI2C0_STATE_READ_BYTE_ADDR,
+    HI2C0_STATE_READ_DONE
+} HI2C0_eState;
+
+
+/**
+    Common access
+*/
+extern bool HI2C0_isChipPresent(void);
+extern uint8_t HI2C0_getChipAddress(void);
+extern void HI2C0_setChipAddress(uint8_t chipAddress);
+/**
+    HandleTask access
+*/
+extern HI2C0_eState HI2C0_eHandleTask(void);
+extern HI2C0_eState HI2C0_eActualState(void);
+extern bool HI2C0_writeByte(uint8_t addr, bool stop, uint8_t data);
+extern bool HI2C0_readByte(uint8_t addr, bool stop);
+extern uint8_t HI2C0_readLastByte(void);
+/**
+    Forced access
+*/
+extern bool HI2C0_writeByteForced(uint8_t addr, bool stop, uint8_t data);
+extern bool HI2C0_writeAddrForced(uint8_t addr, bool stop);
+extern uint8_t HI2C0_readByteForced(uint8_t addr, bool stop);
+
+
 /**
 \b description: \n
  This is the external reference to the maximum waitstate delay. This delay controls
@@ -31,13 +71,6 @@ extern const uint8_t HI2C0_ucMaxWaitState;
 extern uint8_t HI2C0_ucError;
 extern uint8_t HI2C0_ucLastRx;
 extern bool  HI2C0_bEventEnabled;
-
-extern bool HI2C0_writeByteForced(uint8_t addr, bool stop, uint8_t data);
-extern bool HI2C0_writeAddrForced(uint8_t addr, bool stop);
-extern bool HI2C0_isChipPresent(void);
-extern uint8_t HI2C0_readByteForced(uint8_t addr, bool stop);
-extern uint8_t HI2C0_getChipAddress(void);
-extern void HI2C0_setChipAddress(uint8_t chipAddress);
 
 /************************************************************************************/
 
@@ -315,7 +348,7 @@ extern void HI2C0_vInit(uint8_t chipAddress);
  \b type: bool\n
  \b range: true, false
 */
-extern bool HI2C0_bSetAddr(uint8_t ucAddress);
+extern bool HI2C0_bSetAddrForced(uint8_t ucAddress);
 
 /** Sends a single data byte over the I2C bus.
 
