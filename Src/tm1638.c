@@ -10,7 +10,6 @@ static uint8_t statusTlBuff[4];
 static uint8_t statusTlMsk;
 
 void tm1638_initPort(void);
-void tm1638_sendCommand(uint8_t comm);
 void tm1638_sendData(uint8_t data);
 void tm1638_setAddress(uint8_t address, bool stop);
 uint8_t tm_convToDigit(uint8_t ch);
@@ -251,6 +250,16 @@ void tm1638_initPort(void) {
     TM_DIO_CONFIG();
     TM_DIO_OUT();                                    // DIO - input/output with open collector, pull up from uP
     TM_DIO_1();
+}
+
+bool tm1638_changePulse(uint8_t pulse) {
+    bool ret = false;
+    if(TM1638_STATUS_TL_DONE == statusTl) {
+        tm1638_sendCommand(TM1638_COMMAND_WRITE_DATA);
+        tm1638_sendCommand((uint8_t)(TM1638_COMMAND_LCD_ON_PULSE_1_16 | pulse));
+        ret = true;
+    }
+    return ret;
 }
 
 void tm1638_init(void) {

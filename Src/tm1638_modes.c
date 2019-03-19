@@ -2,11 +2,12 @@
 
 static bool tmm_show = false;
 static uint8_t tmm_tlBuff[9];
+static uint8_t tmm_chLast;
 static TMM_tStatus tmm_status = TMM_STATUS_NOT_INIT;
 
 void tmm_changeModeInit(TMM_tStatus status);
 void tmm_changeModeIf(void);
-void tmm_blink(bool digit, bool led);
+bool tmm_blink(bool digit, bool led, uint8_t button);
 void tmm_tlBuff0plus(void);
 
 void tmm_changeModeInit(TMM_tStatus status) {
@@ -23,6 +24,7 @@ void tmm_changeModeInit(TMM_tStatus status) {
             }
             tm1638_showLed(0u);
             break;
+        case TMM_STATUS_MODE_5_LED_PULSE:
         case TMM_STATUS_MODE_4_TEMP:
         case TMM_STATUS_MODE_0:
             tmm_tlBuff[0] = 0xFFu;
@@ -66,28 +68,37 @@ void tmm_changeModeIf(void) {
                 tmm_changeModeInit((TMM_tStatus)(j - '0'));
             } else if(j == '4') {
                 tmm_changeModeInit(TMM_STATUS_MODE_4_TEMP);
+            } else if(j == '5') {
+                tmm_changeModeInit(TMM_STATUS_MODE_5_LED_PULSE);
             }
         }
     }
 }
 
-void tmm_blink(bool digit, bool led) {
-    if(true == TIM_delayIsTimerDown(DELAY_TM1638_BLINK)) {
-        TIM_delaySetTimer(DELAY_TM1638_BLINK, 500u);
-        if(0u == (0x80u & tmm_tlBuff[0])) {
-            if(true == digit)
-                tm1638_showPos(tmm_tlBuff[0], tmm_tlBuff[tmm_tlBuff[0]]);
-            if(true == led)
-                tm1638_showLed(0u);
-            tmm_tlBuff[0] |= 0x80u;
-        } else {
-            tmm_tlBuff[0] &= 0x7Fu;
-            if(true == digit)
-                tm1638_showPos(tmm_tlBuff[0], ' ');
-            if(true == led)
-                tm1638_showLed(0x80u >> (tmm_tlBuff[0] - 1u));
+bool tmm_blink(bool digit, bool led, uint8_t button) {
+    bool ret;
+    if(0u == button) {
+        if(0u != TIM_delayIsTimerDown(DELAY_TM1638_BLINK)) {
+            TIM_delaySetTimer(DELAY_TM1638_BLINK, 500u);
+            if(0u == (0x80u & tmm_tlBuff[0])) {
+                if(0u != digit)
+                    tm1638_showPos(tmm_tlBuff[0], tmm_tlBuff[tmm_tlBuff[0]]);
+                if(0u != led)
+                    tm1638_showLed(0u);
+                tmm_tlBuff[0] |= 0x80u;
+            } else {
+                tmm_tlBuff[0] &= 0x7Fu;
+                if(0u != digit)
+                    tm1638_showPos(tmm_tlBuff[0], ' ');
+                if(0u != led)
+                    tm1638_showLed(0x80u >> (tmm_tlBuff[0] - 1u));
+            }
         }
+        ret = false;
+    } else {
+        ret = true;
     }
+    return ret;
 }
 
 void tmm_tlBuff0plus(void) {
@@ -106,7 +117,7 @@ void TMM_handleTask(void) {
     uint8_t i, ch;
     uint8_t *p;
     if(TM1638_STATUS_TL_DONE == TM1638_handleTaskTl()) {
-        if((TIM_delayIsTimerDown(DELAY_TM1638) == true) && (true == tmm_show)) {
+        if((TIM_delayIsTimerDown(DELAY_TM1638) == true) && (0u != tmm_show)) {
             tmm_show = false;
             ch = tm1638_getTl();
             TIM_delaySetTimer(DELAY_TM1638, 100u);
@@ -139,8 +150,40 @@ void TMM_handleTask(void) {
                     }
                     break;
 
-                case TMM_STATUS_MODE_2:
+                case TMM_STATUS_MODE_5_LED_PULSE:
+                    if(0u == ch) {
+                        if(0u != TIM_delayIsTimerDown(DELAY_TM1638_BLINK)) {
+                            TIM_delaySetTimer(DELAY_TM1638_BLINK, 500u);
+                            if(0u == tmm_tlBuff[0]) {
+                                tmm_tlBuff[0] = 0xFFu;
+                            } else {
+                                tmm_tlBuff[0] = 0u;
+                            }
+                            tm1638_showLed(tmm_tlBuff[0]);
+                        }
+                        break;
+                    }
+                    tmm_status = TMM_STATUS_MODE_5_LED_PULSE_WAIT;  // no break!
+                case TMM_STATUS_MODE_5_LED_PULSE_WAIT:
                     if(0u != ch) {
+                        tmm_chLast = ch;
+                        tm1638_showLed(ch);
+                    } else {
+                        ch = tmm_chLast;
+                        for(i = 0u; i < 8u; i++) {
+                            if(0u != (0x80u & ch)) {
+                                break;
+                            }
+                            ch <<= 1u;
+                        }
+                        if(0u != tm1638_changePulse(i)) {
+                            tmm_changeModeInit(TMM_STATUS_MODE_4_TEMP);
+                        }
+                    }
+                    break;
+
+                case TMM_STATUS_MODE_2:
+                    if(0u != tmm_blink(true, true, ch)) {
                         for(i = 0u; i < 8u; i++) {
                             if(0u != (ch & 0x80u)) {
                                 i++;
@@ -157,11 +200,10 @@ void TMM_handleTask(void) {
                         }
                         tmm_changeModeIf();
                     }
-                    tmm_blink(true, true);
                     break;
 
                 case TMM_STATUS_MODE_3:
-                    if(0u != ch) {
+                    if(0u != tmm_blink(false, true, ch)) {   // only LED blink
                         if(0u != (0x80u & ch)) {
                             tmm_tlBuff[0]--;
                             if((0x0Fu & tmm_tlBuff[0]) < 1u) {
@@ -177,7 +219,6 @@ void TMM_handleTask(void) {
                         tmm_tlBuff[0] |= 0x80u; // aby vo funckii tmm_blink zasvietila ledka po dtlaceni tl.
                         TIM_delaySetTimer(DELAY_TM1638_BLINK, 0u);
                     }
-                    tmm_blink(false, true); // only LED blink
                     break;
                 case TMM_STATUS_MODE_3_NUM:
                     if(0u != ch) {
@@ -201,7 +242,7 @@ void TMM_handleTask(void) {
                         tmm_tlBuff[0] &= 0x7Fu; // aby vo funckii tmm_blink zasvietila cislica po dtlaceni tl.
                         TIM_delaySetTimer(DELAY_TM1638_BLINK, 0u);
                     }
-                    tmm_blink(true, false); // only number blink
+                    (void)tmm_blink(true, false, ch); // only number blink
                     if(TMM_STATUS_MODE_3_NUM != tmm_status) {
                         tm1638_show(&tmm_tlBuff[1]);
                         tmm_changeModeIf();

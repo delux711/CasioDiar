@@ -13,7 +13,9 @@ typedef enum _TMM_tStatus {
     TMM_STATUS_MODE_3,
     TMM_STATUS_MODE_3_NUM,
     TMM_STATUS_MODE_0,
-    TMM_STATUS_MODE_4_TEMP
+    TMM_STATUS_MODE_4_TEMP,
+    TMM_STATUS_MODE_5_LED_PULSE,
+    TMM_STATUS_MODE_5_LED_PULSE_WAIT
 } TMM_tStatus;
 
 extern void TMM_handleTask(void);

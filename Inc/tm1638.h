@@ -89,5 +89,6 @@ extern void tm1638_show(uint8_t *buff);
 extern void tm1638_showPos(uint8_t position, uint8_t ch);
 extern void tm1638_readTl(uint8_t *buff);
 extern void tm1638_communication(bool turnOnOff);
+extern bool tm1638_changePulse(uint8_t pulse);
 
 #endif
