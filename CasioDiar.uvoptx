@@ -157,18 +157,18 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
-          <LineNumber>64</LineNumber>
+          <LineNumber>174</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134236074</Address>
+          <Address>134235232</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>.\Src\hi2c0_manage.c</Filename>
+          <Filename>.\Src\tm1638_modes.c</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\CasioDiar\Src/hi2c0_manage.c\64</Expression>
+          <Expression>\\CasioDiar\Src/tm1638_modes.c\174</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>
@@ -296,6 +296,16 @@
           <count>24</count>
           <WinNumber>1</WinNumber>
           <ItemText>buffTm1638</ItemText>
+        </Ww>
+        <Ww>
+          <count>25</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>bmpState</ItemText>
+        </Ww>
+        <Ww>
+          <count>26</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>shtState</ItemText>
         </Ww>
       </WatchWindow1>
       <WatchWindow2>
